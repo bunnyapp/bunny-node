@@ -68,7 +68,7 @@ let signature = req.headers["x-recur-signature"];
 let payload = req.body;
 let signingToken = "<secret signing token>";
 
-let valid = recur.webhooks.validate(actualSignature, payload, signingToken);
+let valid = recur.webhooks.validate(signature, payload, signingToken);
 ```
 
 ## Test
