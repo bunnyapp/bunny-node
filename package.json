@@ -1,5 +1,5 @@
 {
-  "name": "recur-crm",
+  "name": "recurcrm",
   "version": "0.2.7",
   "description": "Node.js client for Recur CRM",
   "main": "index.js",

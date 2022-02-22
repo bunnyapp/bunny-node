@@ -7,13 +7,13 @@ A node sdk for Recur CRM
 Install the latest package.
 
 ```sh
-npm install recur-crm --save
+npm install recurcrm --save
 ```
 
 Create a client providing baseUrl and accessToken.
 
 ```js
-const Recur = require("recur-crm");
+const Recur = require("recurcrm");
 const recur = new Recur({
   baseUrl: "https://<subdomain>.recurcrm.com",
   accessToken: "<recur-access-token>",
