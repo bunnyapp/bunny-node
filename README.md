@@ -63,18 +63,18 @@ When Recur sends a webhook request it includes a `x-recur-signature` header whic
 
 Recur will provide a signing token which you will need to store in your application and use for validating the webhook.
 
-```
+```js
 let signature = req.headers["x-recur-signature"];
 let payload = req.body;
 let signingToken = "<secret signing token>";
 
-let valid = recur.webhooks.validate(actualSignature, payload, signingToken)
+let valid = recur.webhooks.validate(actualSignature, payload, signingToken);
 ```
 
 ## Test
 
 Run unit tests
 
-```
+```sh
 npm test
 ```
