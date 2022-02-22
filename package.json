@@ -1,0 +1,42 @@
+{
+  "name": "recur-crm",
+  "version": "0.2.7",
+  "description": "Node.js client for Recur CRM",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/recurcrm/recur-node.git"
+  },
+  "keywords": [
+    "crm",
+    "billing",
+    "saas",
+    "subscriptions"
+  ],
+  "author": "Rich Chetwynd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/recurcrm/recur-node/issues"
+  },
+  "homepage": "https://github.com/recurcrm/recur-node#readme",
+  "dependencies": {
+    "axios": "^0.26.0",
+    "safe-buffer": "^5.2.1",
+    "scmp": "^2.1.0"
+  },
+  "devDependencies": {
+    "mocha": "^9.2.0"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "index.js",
+    "src/"
+  ]
+}
