@@ -1,5 +1,5 @@
 const assert = require("assert");
-const Recur = require("../src");
+const Bunny = require("../src");
 
 let options;
 
@@ -17,9 +17,9 @@ describe("#webhooks", function () {
       let actualSignature = "db5c76f4264d0ad96cf21baec394964b4b8ce580";
       let payload = {};
 
-      let recur = new Recur(options);
+      let bunny = new Bunny(options);
 
-      assert(recur.webhooks.validate(actualSignature, payload, signingToken));
+      assert(bunny.webhooks.validate(actualSignature, payload, signingToken));
       done();
     });
 
@@ -29,9 +29,9 @@ describe("#webhooks", function () {
 
       options.webhookSigningToken = "abc";
 
-      let recur = new Recur(options);
+      let bunny = new Bunny(options);
 
-      assert(recur.webhooks.validate(actualSignature, payload));
+      assert(bunny.webhooks.validate(actualSignature, payload));
       done();
     });
   });
@@ -42,11 +42,11 @@ describe("#webhooks", function () {
       let actualSignature = "db5c76f4264d0ad96cf21baec394964b4b8ce580";
       let payload = {};
 
-      let recur = new Recur(options);
+      let bunny = new Bunny(options);
 
       assert.strictEqual(
         false,
-        recur.webhooks.validate(actualSignature, payload, signingToken)
+        bunny.webhooks.validate(actualSignature, payload, signingToken)
       );
       done();
     });

@@ -3,15 +3,15 @@ var axios = require("axios");
 
 var Webhooks = require("./webhooks");
 
-class Recur {
+class Bunny {
   constructor(options = {}) {
-    if (!(this instanceof Recur)) return new Recur();
-    assert(options.baseUrl, "Recur base url required");
-    assert(options.accessToken, "Recur access token required");
+    if (!(this instanceof Bunny)) return new Bunny();
+    assert(options.baseUrl, "Bunny base url required");
+    assert(options.accessToken, "Bunny access token required");
 
     this.client = axios.create({
       headers: {
-        "User-Agent": "Recur-node",
+        "User-Agent": "Bunny-node",
         Authorization: `bearer ${options.accessToken}`,
       },
       baseUrl: options.baseUrl,
@@ -34,4 +34,4 @@ class Recur {
   }
 }
 
-module.exports = Recur;
+module.exports = Bunny;

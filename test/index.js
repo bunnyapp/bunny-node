@@ -1,21 +1,21 @@
 const assert = require("assert");
-const Recur = require("../src");
+const Bunny = require("../src");
 
-describe("Recur", function () {
+describe("Bunny", function () {
   it("should expose a constructor", function () {
-    assert.equal("function", typeof Recur);
+    assert.equal("function", typeof Bunny);
   });
 
   it("should require an access token", function () {
     assert.throws(() => {
-      new Recur({ baseUrl: "url" });
-    }, error("Recur access token required"));
+      new Bunny({ baseUrl: "url" });
+    }, error("Bunny access token required"));
   });
 
   it("should require a base url", function () {
     assert.throws(() => {
-      new Recur({ accessToken: "abc" });
-    }, error("Recur base url required"));
+      new Bunny({ accessToken: "abc" });
+    }, error("Bunny base url required"));
   });
 });
 
