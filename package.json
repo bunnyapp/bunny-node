@@ -1,6 +1,6 @@
 {
   "name": "bunny",
-  "version": "0.2.7",
+  "version": "1.0.1",
   "description": "Node.js client for Bunny CRM",
   "main": "index.js",
   "directories": {
