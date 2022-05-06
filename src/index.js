@@ -14,7 +14,7 @@ class Bunny {
         "User-Agent": "Bunny-node",
         Authorization: `bearer ${options.accessToken}`,
       },
-      baseUrl: options.baseUrl,
+      baseURL: options.baseUrl,
       validateStatus: function (status) {
         return status >= 200 && status < 500; // only throw errors on 5xx
       },
