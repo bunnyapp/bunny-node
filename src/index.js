@@ -7,20 +7,58 @@ class Bunny {
   constructor(options = {}) {
     if (!(this instanceof Bunny)) return new Bunny();
     assert(options.baseUrl, "Bunny base url required");
-    assert(options.accessToken, "Bunny access token required");
+
+    this.options = options;
+
+    if (options.accessToken == undefined) {
+      assert(options.clientId, "Bunny API clientId required");
+      assert(options.clientSecret, "Bunny API clientSecret required");
+      assert(options.scope, "Bunny API scopes required");
+    }
 
     this.client = axios.create({
       headers: {
         "User-Agent": "Bunny-node",
-        Authorization: `bearer ${options.accessToken}`,
       },
       baseURL: options.baseUrl,
-      validateStatus: function (status) {
-        return status >= 200 && status < 500; // only throw errors on 5xx
-      },
+    });
+
+    this.client.interceptors.response.use(null, async (error) => {
+      if (
+        error.config &&
+        error.response &&
+        error.response.status === 401 &&
+        !error.config.retry &&
+        error.config.url != "/oauth/token"
+      ) {
+        const accessToken = await this.fetchAccessToken();
+
+        error.config.retry = true;
+        error.config.headers["Authorization"] = `bearer ${accessToken}`;
+
+        return axios.request(error.config);
+      }
+
+      return Promise.reject(error);
     });
 
     this.webhooks = new Webhooks(options.webhookSigningToken);
+  }
+  async fetchAccessToken() {
+    const params = new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: this.options.clientId,
+      client_secret: this.options.clientSecret,
+      scope: this.options.scope,
+    });
+
+    let res = await this.client.post("/oauth/token", params, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+    console.log("** FET", res);
+    return res?.data?.access_token;
   }
   async query(query, variables) {
     let body = {
@@ -28,7 +66,15 @@ class Bunny {
       variables,
     };
 
-    let res = await this.client.post("/graphql", body);
+    if (this.options.accessToken == undefined) {
+      this.options.accessToken = await this.fetchAccessToken();
+    }
+
+    let res = await this.client.post("/graphql", body, {
+      headers: {
+        Authorization: `bearer ${this.options.accessToken}`,
+      },
+    });
 
     return res.data;
   }

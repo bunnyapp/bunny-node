@@ -10,13 +10,32 @@ Install the latest package.
 npm install bunny --save
 ```
 
-Create a client providing baseUrl and accessToken.
+Create a Bunny api client using either a valid access token or client credentials.
+
+### Access Token
+
+The benefit of providing an accessToken is the request will be faster as an access token does not need to be generated. The
+downside of this approach is that if the token expires then your requests will start to fail.
 
 ```js
 const Bunny = require("bunny");
 const bunny = new Bunny({
   baseUrl: "https://<subdomain>.bunny.com",
   accessToken: "<bunny-access-token>",
+});
+```
+
+### Client Credentials
+
+Alternately you can provide clientId, clientSecret, & scope. In this case the client will generate an access token and if the token expires it will generate another one.
+
+```js
+const Bunny = require("bunny");
+const bunny = new Bunny({
+  baseUrl: "https://<subdomain>.bunny.com",
+  clientId: "<bunny-client-id>",
+  clientSecret: "<bunny-client-secret>",
+  scope: "standard:read standard:write",
 });
 ```
 
