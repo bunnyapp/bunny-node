@@ -13,7 +13,7 @@ class Bunny {
     if (options.accessToken == undefined) {
       assert(options.clientId, "Bunny API clientId required");
       assert(options.clientSecret, "Bunny API clientSecret required");
-      assert(options.scope, "Bunny API scopes required");
+      assert(options.scope, "Bunny API scope required");
     }
 
     this.client = axios.create({
