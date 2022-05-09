@@ -57,7 +57,7 @@ class Bunny {
         "Content-Type": "application/x-www-form-urlencoded",
       },
     });
-    console.log("** FET", res);
+
     return res?.data?.access_token;
   }
   async query(query, variables) {
