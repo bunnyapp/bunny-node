@@ -44,6 +44,7 @@ class Bunny {
 
     this.webhooks = new Webhooks(options.webhookSigningToken);
   }
+
   async fetchAccessToken() {
     const params = new URLSearchParams({
       grant_type: "client_credentials",
@@ -60,6 +61,7 @@ class Bunny {
 
     return res?.data?.access_token;
   }
+
   async query(query, variables) {
     let body = {
       query,
@@ -79,5 +81,8 @@ class Bunny {
     return res.data;
   }
 }
+
+Bunny.prototype.createTrial = require("./helpers/create-trial.js");
+Bunny.prototype.trackUsage = require("./helpers/track-usage.js");
 
 module.exports = Bunny;

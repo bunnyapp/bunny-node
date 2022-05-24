@@ -1,4 +1,6 @@
 const assert = require("assert");
+const sinon = require("sinon");
+
 const Bunny = require("../src");
 
 describe("Bunny", function () {
@@ -6,16 +8,51 @@ describe("Bunny", function () {
     assert.equal("function", typeof Bunny);
   });
 
-  it("should require an access token", function () {
-    assert.throws(() => {
-      new Bunny({ baseUrl: "url" });
-    }, error("Bunny access token required"));
-  });
-
   it("should require a base url", function () {
     assert.throws(() => {
-      new Bunny({ accessToken: "abc" });
+      new Bunny({});
     }, error("Bunny base url required"));
+  });
+
+  describe("When no access token is provided", function () {
+    it("should require a client id", function () {
+      assert.throws(() => {
+        new Bunny({ baseUrl: "url" });
+      }, error("Bunny API clientId required"));
+    });
+    it("should require a client secret", function () {
+      assert.throws(() => {
+        new Bunny({ baseUrl: "url", clientId: "id" });
+      }, error("Bunny API clientSecret required"));
+    });
+    it("should require a scope", function () {
+      assert.throws(() => {
+        new Bunny({ baseUrl: "url", clientId: "id", clientSecret: "secret" });
+      }, error("Bunny API scope required"));
+    });
+  });
+
+  describe("Convenience methods", function () {
+    let bunny = new Bunny({ baseUrl: "url", accessToken: "token" });
+    let query;
+
+    beforeEach(function () {
+      query = sinon.spy(bunny, "query");
+    });
+
+    afterEach(function () {
+      query.restore();
+    });
+
+    it("should expose a trialCreate method", function () {
+      bunny.createTrial("A", "F", "L", "E", "P", "D");
+      assert(query.calledOnce);
+    });
+
+    it("should expose a trialCreate method", function () {
+      bunny.trackUsage("Q", "D", "E", "F");
+      assert(query.calledOnce);
+    });
   });
 });
 
