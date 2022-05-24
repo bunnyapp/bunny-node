@@ -1,5 +1,5 @@
 {
-  "name": "bunny",
+  "name": "bunny-app",
   "version": "1.0.3",
   "description": "Node.js client for Bunny CRM",
   "main": "index.js",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/recurcrm/bunny-node.git"
+    "url": "git+https://github.com/bunnyapp/bunny-node.git"
   },
   "keywords": [
     "crm",
@@ -22,9 +22,9 @@
   "author": "Rich Chetwynd",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/recurcrm/bunny-node/issues"
+    "url": "https://github.com/bunnyapp/bunny-node/issues"
   },
-  "homepage": "https://github.com/recurcrm/bunny-node#readme",
+  "homepage": "https://github.com/bunnyapp/bunny-node#readme",
   "dependencies": {
     "axios": "^0.26.0",
     "safe-buffer": "^5.2.1",
