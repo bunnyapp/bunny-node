@@ -21,15 +21,19 @@ module.exports = async function (
   lastName,
   email,
   productPlanCode,
-  trialStartDate
+  platformCode = null,
+  environmentCode = null,
+  trialStartDate = null
 ) {
   let variables = {
     attributes: {
-      company: accountName,
+      accountName: accountName,
       firstName: firstName,
       lastName: lastName,
       email: email,
       productPlanCode: productPlanCode,
+      platformCode: platformCode,
+      environmentCode: environmentCode,
       trialStartDate: trialStartDate,
     },
   };
