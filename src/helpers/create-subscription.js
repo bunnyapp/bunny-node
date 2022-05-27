@@ -1,5 +1,5 @@
-const query = `mutation trialCreate ($attributes: TrialAttributes!) {
-  trialCreate (attributes: $attributes) {
+const query = `mutation subscriptionCreate ($attributes: SubscriptionAttributes!) {
+  subscriptionCreate (attributes: $attributes) {
       errors
       subscription {
           id
@@ -21,6 +21,7 @@ module.exports = async function (
   lastName,
   email,
   productPlanCode,
+  trial = false,
   platformCode = null,
   environmentCode = null,
   trialStartDate = null
@@ -35,6 +36,7 @@ module.exports = async function (
       platformCode: platformCode,
       environmentCode: environmentCode,
       trialStartDate: trialStartDate,
+      trial: trial,
     },
   };
   return this.query(query, variables);

@@ -44,12 +44,12 @@ describe("Bunny", function () {
       query.restore();
     });
 
-    it("should expose a trialCreate method", function () {
-      bunny.createTrial("A", "F", "L", "E", "P", "D");
+    it("should expose a createSubscription method", function () {
+      bunny.createSubscription("A", "F", "L", "E", "P", "D");
       assert(query.calledOnce);
     });
 
-    it("should expose a trialCreate method", function () {
+    it("should expose a trackUsage method", function () {
       bunny.trackUsage("Q", "D", "E", "F");
       assert(query.calledOnce);
     });
