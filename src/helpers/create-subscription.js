@@ -21,10 +21,7 @@ module.exports = async function (
   lastName,
   email,
   productPlanCode,
-  trial = false,
-  platformCode = null,
-  environmentCode = null,
-  trialStartDate = null
+  options = {}
 ) {
   let variables = {
     attributes: {
@@ -33,10 +30,10 @@ module.exports = async function (
       lastName: lastName,
       email: email,
       productPlanCode: productPlanCode,
-      platformCode: platformCode,
-      environmentCode: environmentCode,
-      trialStartDate: trialStartDate,
-      trial: trial,
+      platformCode: options["platformCode"],
+      environmentCode: options["environmentCode"],
+      trialStartDate: options["trialStartDate"],
+      trial: options["trial"],
     },
   };
   return this.query(query, variables);
