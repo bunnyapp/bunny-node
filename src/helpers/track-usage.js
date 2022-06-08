@@ -20,18 +20,22 @@ const query = `mutation featureUsageCreate ($attributes: FeatureUsageAttributes!
 }`;
 
 module.exports = async function (
+  featureCode,
   quantity,
-  usageAt,
   environmentCode,
-  featureCode
+  usageAt = null
 ) {
   let variables = {
     attributes: {
       quantity: quantity,
-      usageAt: usageAt,
       environmentCode: environmentCode,
       featureCode: featureCode,
     },
   };
+
+  if (usageAt) {
+    variables["attributes"]["usageAt"] = usageAt;
+  }
+
   return this.query(query, variables);
 };
