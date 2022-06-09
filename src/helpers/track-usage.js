@@ -5,7 +5,7 @@ const query = `mutation featureUsageCreate ($attributes: FeatureUsageAttributes!
             id
             quantity
             usageAt
-            environment {
+            tenant {
                 id
                 code
                 name
@@ -22,13 +22,13 @@ const query = `mutation featureUsageCreate ($attributes: FeatureUsageAttributes!
 module.exports = async function (
   featureCode,
   quantity,
-  environmentCode,
+  tenantCode,
   usageAt = null
 ) {
   let variables = {
     attributes: {
       quantity: quantity,
-      environmentCode: environmentCode,
+      tenantCode: tenantCode,
       featureCode: featureCode,
     },
   };

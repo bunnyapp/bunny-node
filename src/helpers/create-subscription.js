@@ -31,7 +31,7 @@ module.exports = async function (
       email: email,
       productPlanCode: productPlanCode,
       platformCode: options["platformCode"],
-      environmentCode: options["environmentCode"],
+      tenantCode: options["tenantCode"],
       trialStartDate: options["trialStartDate"],
       trial: options["trial"],
     },

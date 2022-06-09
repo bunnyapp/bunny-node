@@ -83,7 +83,7 @@ class Bunny {
 }
 
 Bunny.prototype.createSubscription = require("./helpers/create-subscription.js");
-Bunny.prototype.createEnvironment = require("./helpers/create-environment.js");
+Bunny.prototype.createTenant = require("./helpers/create-tenant.js");
 Bunny.prototype.trackUsage = require("./helpers/track-usage.js");
 
 module.exports = Bunny;

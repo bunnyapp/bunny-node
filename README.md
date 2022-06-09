@@ -41,13 +41,12 @@ const bunny = new Bunny({
 
 ## Convenience methods
 
-- Not implemented yet
-
 This SDK wrappers several of the common Bunny API requests.
 
 ```
-bunny.createTrial()
-bunny.updateSubscription()
+bunny.createSubscription(accountName, firstName, lastName, email, productPlanCode, options)
+bunny.createTenant(name, code, platformCode, subscriptionId)
+bunny.trackUsage(featureCode, quantity, tenantCode, usageAt)
 ```
 
 ## Perform a query
@@ -55,8 +54,8 @@ bunny.updateSubscription()
 If the convenience methods on this SDK are not enough and you need more control over queries or mutations then you can make an async request against the Bunny GraphQL API.
 
 ```js
-let query = `query environments ($filter: String, $limit: Int) {
-    environments (filter: $filter, limit: $limit) {
+let query = `query tenants ($filter: String, $limit: Int) {
+    tenants (filter: $filter, limit: $limit) {
         platform {
             id
             name

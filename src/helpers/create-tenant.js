@@ -1,6 +1,6 @@
-const query = `mutation environmentCreate ($attributes: EnvironmentAttributes!, $subscriptionId: ID!) {
-  environmentCreate (attributes: $attributes, subscriptionId: $subscriptionId) {
-    environment {
+const query = `mutation tenantCreate ($attributes: TenantAttributes!, $subscriptionId: ID!) {
+  tenantCreate (attributes: $attributes, subscriptionId: $subscriptionId) {
+    tenant {
       code
       id
       name
