@@ -43,10 +43,17 @@ const bunny = new Bunny({
 
 This SDK wrappers several of the common Bunny API requests.
 
-```
-bunny.createSubscription(accountName, firstName, lastName, email, productPlanCode, options)
-bunny.createTenant(name, code, platformCode, subscriptionId)
-bunny.trackUsage(featureCode, quantity, tenantCode, usageAt)
+```js
+bunny.createSubscription(
+  accountName,
+  firstName,
+  lastName,
+  email,
+  productPlanCode,
+  options
+);
+bunny.createTenant(name, code, platformCode, subscriptionId);
+bunny.trackUsage(featureCode, quantity, tenantCode, usageAt);
 ```
 
 ## Perform a query
