@@ -17,8 +17,8 @@ module.exports = async function (id, code, name) {
   let variables = {
     id: id,
     attributes: {
+      code: code?.toString(),
       name: name,
-      code: code,
     },
   };
   return this.query(query, variables);
