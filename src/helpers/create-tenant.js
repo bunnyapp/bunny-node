@@ -10,7 +10,6 @@ const query = `mutation tenantCreate ($attributes: TenantAttributes!, $subscript
         code
       }
     }
-    errors
   }
 }`;
 

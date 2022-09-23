@@ -84,6 +84,7 @@ class Bunny {
 
 Bunny.prototype.createSubscription = require("./helpers/create-subscription.js");
 Bunny.prototype.createTenant = require("./helpers/create-tenant.js");
+Bunny.prototype.updateTenant = require("./helpers/update-tenant.js");
 Bunny.prototype.trackUsage = require("./helpers/track-usage.js");
 
 module.exports = Bunny;
