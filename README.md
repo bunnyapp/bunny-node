@@ -7,7 +7,7 @@ A node sdk for Bunny CRM
 Install the latest package.
 
 ```sh
-npm install bunny --save
+npm install @bunnyapp/api-client --save
 ```
 
 Create a Bunny api client using either a valid access token or client credentials.
@@ -18,8 +18,8 @@ The benefit of providing an accessToken is the request will be faster as an acce
 downside of this approach is that if the token expires then your requests will start to fail.
 
 ```js
-const Bunny = require("bunny");
-const bunny = new Bunny({
+const BunnyClient = require("@bunnyapp/api-client");
+const bunny = new BunnyClient({
   baseUrl: "https://<subdomain>.bunny.com",
   accessToken: "<bunny-access-token>",
 });
@@ -30,8 +30,8 @@ const bunny = new Bunny({
 Alternately you can provide clientId, clientSecret, & scope. In this case the client will generate an access token and if the token expires it will generate another one.
 
 ```js
-const Bunny = require("bunny");
-const bunny = new Bunny({
+const BunnyClient = require("@bunnyapp/api-client");
+const bunny = new BunnyClient({
   baseUrl: "https://<subdomain>.bunny.com",
   clientId: "<bunny-client-id>",
   clientSecret: "<bunny-client-secret>",
