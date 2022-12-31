@@ -44,14 +44,14 @@ const bunny = new BunnyClient({
 This SDK wrappers several of the common Bunny API requests.
 
 ```js
-bunny.createSubscription(
-  accountName,
-  firstName,
-  lastName,
-  email,
-  productPlanCode,
-  options
-);
+bunny.createSubscription("productPlanCode", {
+  trial: true,
+  accountName: "accountName",
+  firstName: "firstName",
+  lastName: "lastName",
+  email: "email",
+  tenantCode: "remoteId",
+});
 bunny.createTenant(name, code, platformCode, subscriptionId);
 bunny.trackUsage(featureCode, quantity, tenantCode, usageAt);
 ```
