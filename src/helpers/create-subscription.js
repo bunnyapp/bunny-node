@@ -1,29 +1,36 @@
 const query = `mutation subscriptionCreate ($attributes: SubscriptionAttributes!) {
   subscriptionCreate (attributes: $attributes) {
-    errors
     subscription {
       id
       account {
-          name
-          contacts {
-              id
-              firstName
-              lastName
-          }
+        id
+        name
+        contacts {
+          id
+          firstName
+          lastName
+        }
       }
       trialStartDate
       trialEndDate
       startDate
       endDate
       state
-      productPlan {
+      plan {
+        code
+        name
+      }
+      priceList {
+        code
         name
       }
       tenant {
-          code
-          name
+        id
+        code
+        name
       }
     }
+    errors
   }
 }`;
 
