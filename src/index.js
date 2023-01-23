@@ -9,11 +9,13 @@ class Bunny {
     assert(options.baseUrl, "Bunny base url required");
 
     this.options = options;
+    this.retryEnabled = false;
 
     if (options.accessToken == undefined) {
       assert(options.clientId, "Bunny API clientId required");
       assert(options.clientSecret, "Bunny API clientSecret required");
       assert(options.scope, "Bunny API scope required");
+      this.retryEnabled = true;
     }
 
     this.client = axios.create({
@@ -25,6 +27,7 @@ class Bunny {
 
     this.client.interceptors.response.use(null, async (error) => {
       if (
+        this.retryEnabled &&
         error.config &&
         error.response &&
         error.response.status === 401 &&
@@ -32,14 +35,13 @@ class Bunny {
         error.config.url != "/oauth/token"
       ) {
         const accessToken = await this.fetchAccessToken();
-
         error.config.retry = true;
         error.config.headers["Authorization"] = `bearer ${accessToken}`;
 
         return axios.request(error.config);
       }
 
-      return Promise.reject(error);
+      return Promise.reject("Invalid access token");
     });
 
     this.webhooks = new Webhooks(options.webhookSigningToken);
