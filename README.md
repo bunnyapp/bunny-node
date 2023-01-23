@@ -44,7 +44,7 @@ const bunny = new BunnyClient({
 This SDK wrappers several of the common Bunny API requests.
 
 ```js
-bunny.createSubscription("productPlanCode", {
+bunny.createSubscription("priceListCode", {
   trial: true,
   accountName: "accountName",
   firstName: "firstName",

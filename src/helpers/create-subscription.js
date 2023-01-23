@@ -34,10 +34,10 @@ const query = `mutation subscriptionCreate ($attributes: SubscriptionAttributes!
   }
 }`;
 
-module.exports = async function (productPlanCode, options = {}) {
+module.exports = async function (priceListCode, options = {}) {
   let variables = {
     attributes: {
-      productPlanCode: productPlanCode,
+      priceListCode: priceListCode,
       trial: options["trial"] || false,
     },
   };
