@@ -44,6 +44,7 @@ const bunny = new BunnyClient({
 This SDK wrappers several of the common Bunny API requests.
 
 ```js
+// Create a new subscription
 bunny.createSubscription("priceListCode", {
   trial: true,
   accountName: "accountName",
@@ -52,7 +53,11 @@ bunny.createSubscription("priceListCode", {
   email: "email",
   tenantCode: "remoteId",
 });
-bunny.createTenant(name, code, platformCode, subscriptionId);
+
+// Get a session token for the Bunny customer portal
+bunny.createPortalSession("tenantCode");
+
+// Track usage for billing
 bunny.trackUsage(featureCode, quantity, tenantCode, usageAt);
 ```
 
