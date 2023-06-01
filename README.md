@@ -57,6 +57,12 @@ bunny.createSubscription("priceListCode", {
 // Get a session token for the Bunny customer portal
 bunny.createPortalSession("tenantCode");
 
+// Optionally supply a return url to get back to your app
+bunny.createPortalSession("tenantCode", "https://example.com");
+
+// Default session length is 24 hours but you can change it. e.g 12 hours
+bunny.createPortalSession("tenantCode", "https://example.com", 12);
+
 // Track usage for billing
 bunny.trackUsage(featureCode, quantity, tenantCode, usageAt);
 ```
