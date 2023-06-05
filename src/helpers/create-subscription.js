@@ -39,6 +39,7 @@ module.exports = async function (priceListCode, options = {}) {
     attributes: {
       priceListCode: priceListCode,
       trial: options["trial"] || false,
+      evergreen: options["evergreen"] || false,
     },
   };
 
