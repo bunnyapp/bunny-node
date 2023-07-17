@@ -34,12 +34,18 @@ const query = `mutation subscriptionCreate ($attributes: SubscriptionAttributes!
   }
 }`;
 
+/**
+ * Create a new subscription for a tenant
+ * @param {string} priceListCode The code for the plan to subscribe to
+ * @param {Object} options
+ * @returns {Object} The subscription object
+ */
 module.exports = async function (priceListCode, options = {}) {
   let variables = {
     attributes: {
       priceListCode: priceListCode,
       trial: options["trial"] || false,
-      evergreen: options["evergreen"] || false,
+      evergreen: options["evergreen"] || true,
     },
   };
 
@@ -63,5 +69,13 @@ module.exports = async function (priceListCode, options = {}) {
     };
   }
 
-  return this.query(query, variables);
+  const res = await this.query(query, variables);
+
+  console.log(res);
+
+  if (res?.errors) {
+    throw new Error(res.errors.map((e) => e.message).join());
+  }
+
+  return res?.data?.subscriptionCreate?.subscription;
 };
