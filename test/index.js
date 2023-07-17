@@ -44,13 +44,33 @@ describe("Bunny", function () {
       query.restore();
     });
 
-    it("should expose a createSubscription method", function () {
-      bunny.createSubscription("A", "F", "L", "E", "P", "D");
+    it("should expose a subscriptionCreate method", function () {
+      bunny.subscriptionCreate("A", "F", "L", "E", "P", "D");
       assert(query.calledOnce);
     });
 
-    it("should expose a trackUsage method", function () {
-      bunny.trackUsage("Q", "D", "E", "F");
+    it("should expose a featureUsageCreate method", function () {
+      bunny.featureUsageCreate("Q", "D", "E", "F");
+      assert(query.calledOnce);
+    });
+
+    it("should expose a subscriptionCancel method", function () {
+      bunny.subscriptionCancel(1);
+      assert(query.calledOnce);
+    });
+
+    it("should expose a portalSessionCreate method", function () {
+      bunny.portalSessionCreate(1);
+      assert(query.calledOnce);
+    });
+
+    it("should expose a tenantCreate method", function () {
+      bunny.tenantCreate(1);
+      assert(query.calledOnce);
+    });
+
+    it("should expose a tenantUpdate method", function () {
+      bunny.tenantUpdate(1);
       assert(query.calledOnce);
     });
   });

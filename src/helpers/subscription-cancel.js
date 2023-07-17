@@ -4,6 +4,11 @@ const query = `mutation subscriptionCancel ($ids: [ID!]!) {
   }
 }`;
 
+/**
+ * Cancel a subsription
+ * @param {number} subscriptionId
+ * @returns {boolean} Success
+ */
 module.exports = async function (subscriptionId) {
   let variables = {
     ids: [subscriptionId],
@@ -11,9 +16,9 @@ module.exports = async function (subscriptionId) {
 
   const res = await this.query(query, variables);
 
-  return (
-    res.data &&
-    res.data.subscriptionCancel &&
-    res.data.subscriptionCancel.errors == null
-  );
+  if (res?.errors) {
+    throw new Error(res.errors.map((e) => e.message).join());
+  }
+
+  return true;
 };

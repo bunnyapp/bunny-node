@@ -39,37 +39,87 @@ const bunny = new BunnyClient({
 });
 ```
 
-## Convenience methods
+## Helper methods
 
-This SDK wrappers several of the common Bunny API requests.
+This SDK wrappers several of the common Bunny API requests. The response varies based on the method that is used.
 
 ```js
 // Create a new subscription
-bunny.createSubscription("priceListCode", {
+const res = await bunny.subscriptionCreate("priceListCode", {
   trial: true,
   accountName: "accountName",
   firstName: "firstName",
   lastName: "lastName",
-  email: "email",
+  email: "email@example.com",
   tenantCode: "remoteId",
 });
 
+// On success res will be a subscription object
+{
+  id: '17',
+  account: { id: '18', name: 'accountName', contacts: [ [Object] ] },
+  trialStartDate: '2023-07-17',
+  trialEndDate: '2023-07-30',
+  startDate: '2023-07-31',
+  endDate: '2024-07-30',
+  state: 'TRIAL',
+  plan: { code: 'bunny_medium', name: 'Medium' },
+  priceList: { code: 'bunny_medium_monthly', name: 'Monthly' },
+  tenant: { id: '12', code: 'remoteId', name: 'accountName' }
+}
+
+
 // Get a session token for the Bunny customer portal
-bunny.createPortalSession("tenantCode");
+const res = await bunny.portalSessionCreate("tenantCode");
 
 // Optionally supply a return url to get back to your app
-bunny.createPortalSession("tenantCode", "https://example.com");
+const res = await bunny.portalSessionCreate(
+  "tenantCode",
+  "https://example.com"
+);
 
 // Default session length is 24 hours but you can change it. e.g 12 hours
-bunny.createPortalSession("tenantCode", "https://example.com", 12);
+const res = await bunny.portalSessionCreate(
+  "tenantCode",
+  "https://example.com",
+  12
+);
 
 // Track usage for billing
-bunny.trackUsage(featureCode, quantity, tenantCode, usageAt);
+const res = await bunny.tenantUsageCreate(
+  featureCode,
+  quantity,
+  tenantCode,
+  usageAt
+);
+```
+
+## Error handling
+
+If there is an error with a helper method an exception will be raised.
+
+```js
+try {
+  const res = await bunny.subscriptionCreate(...);
+  // Do something
+} catch (error) {
+  console.log(error);
+}
+
+or
+
+bunny.subscriptionCreate(...).then((res) => {
+  // Do something
+}).catch((error) => {
+  console.log(error);
+})
 ```
 
 ## Perform a query
 
 If the convenience methods on this SDK are not enough and you need more control over queries or mutations then you can make an async request against the Bunny GraphQL API.
+
+The response will contain the raw graphql json.
 
 ```js
 let query = `query tenants ($filter: String, $limit: Int) {

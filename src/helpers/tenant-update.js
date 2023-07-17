@@ -10,6 +10,7 @@ const query = `mutation tenantUpdate ($id: ID!, $attributes: TenantAttributes!) 
         code
       }
     }
+    errors
   }
 }`;
 
@@ -21,5 +22,12 @@ module.exports = async function (id, code, name) {
       name: name,
     },
   };
-  return this.query(query, variables);
+
+  const res = await this.query(query, variables);
+
+  if (res?.errors) {
+    throw new Error(res.errors.map((e) => e.message).join());
+  }
+
+  return res?.data?.tenantUpdate?.tenant;
 };

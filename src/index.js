@@ -84,11 +84,11 @@ class Bunny {
   }
 }
 
-Bunny.prototype.createSubscription = require("./helpers/create-subscription.js");
-Bunny.prototype.cancelSubscription = require("./helpers/cancel-subscription.js");
-Bunny.prototype.createTenant = require("./helpers/create-tenant.js");
-Bunny.prototype.updateTenant = require("./helpers/update-tenant.js");
-Bunny.prototype.trackUsage = require("./helpers/track-usage.js");
-Bunny.prototype.createPortalSession = require("./helpers/create-portal-session.js");
+Bunny.prototype.subscriptionCreate = require("./helpers/subscription-create.js");
+Bunny.prototype.subscriptionCancel = require("./helpers/subscription-cancel.js");
+Bunny.prototype.tenantCreate = require("./helpers/tenant-create.js");
+Bunny.prototype.tenantUpdate = require("./helpers/tenant-update.js");
+Bunny.prototype.featureUsageCreate = require("./helpers/feature-usage-create.js");
+Bunny.prototype.portalSessionCreate = require("./helpers/portal-session-create.js");
 
 module.exports = Bunny;
