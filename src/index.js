@@ -41,6 +41,7 @@ class Bunny {
         return axios.request(error.config);
       }
 
+      console.log("Authorization error: ", error);
       return Promise.reject("Invalid access token");
     });
 
@@ -86,6 +87,7 @@ class Bunny {
 
 Bunny.prototype.subscriptionCreate = require("./helpers/subscription-create.js");
 Bunny.prototype.subscriptionCancel = require("./helpers/subscription-cancel.js");
+Bunny.prototype.tenantByCode = require("./helpers/tenant-by-code.js");
 Bunny.prototype.tenantCreate = require("./helpers/tenant-create.js");
 Bunny.prototype.tenantUpdate = require("./helpers/tenant-update.js");
 Bunny.prototype.featureUsageCreate = require("./helpers/feature-usage-create.js");
