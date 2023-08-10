@@ -86,7 +86,7 @@ const res = await bunny.portalSessionCreate(
 );
 
 // Track usage for billing
-const res = await bunny.tenantUsageCreate(
+const res = await bunny.featureUsageCreate(
   featureCode,
   quantity,
   tenantCode,
