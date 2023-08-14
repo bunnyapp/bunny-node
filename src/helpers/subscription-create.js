@@ -28,6 +28,11 @@ const query = `mutation subscriptionCreate ($attributes: SubscriptionAttributes!
         id
         code
         name
+        account {
+          id
+          name
+          billingDay
+        }
       }
     }
     errors
