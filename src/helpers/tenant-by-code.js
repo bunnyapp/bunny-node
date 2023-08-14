@@ -4,6 +4,11 @@ const query = `query tenant ($code: String!) {
     code
     name
     subdomain
+    account {
+      id
+      name
+      billingDay
+    }
     latestProvisioningChange {
         change
         createdAt
