@@ -92,6 +92,19 @@ const res = await bunny.featureUsageCreate(
   tenantCode,
   usageAt
 );
+
+// Update account details including billing address for acount
+const res = await bunny.accountUpdateByTenantCode(
+  "tenantCode",
+  {
+    billingStreet: "123 Main Street",
+    billingCity: "Pleasantville",
+    billingState: "CA",
+    billingZip: "90210",
+    billingCountry: "US"
+  }
+).then(console.log).catch(console.error)
+
 ```
 
 ## Error handling
