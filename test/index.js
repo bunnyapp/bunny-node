@@ -78,6 +78,11 @@ describe("Bunny", function () {
       bunny.tenantByCode("code");
       assert(query.calledOnce);
     });
+
+    it("should expose an accountUpdateByTenantCode method", function () {
+      bunny.accountUpdateByTenantCode("code", {});
+      assert(query.calledOnce);
+    });
   });
 });
 

@@ -5,9 +5,40 @@ const query = `query tenant ($code: String!) {
     name
     subdomain
     account {
-      id
-      name
+      accountTypeId
+      addressValidated
+      annualRevenue
+      billingCity
+      billingContactId
+      billingCountry
       billingDay
+      billingState
+      billingStreet
+      billingZip
+      code
+      createdAt
+      currencyId
+      description
+      duns
+      employees
+      entityUseCode
+      fax
+      groupId
+      id
+      industryId
+      name
+      netPaymentDays
+      ownerUserId
+      phone
+      shippingCity
+      shippingCountry
+      shippingState
+      shippingStreet
+      shippingZip
+      taxNumber
+      timezone
+      updatedAt
+      website
     }
     latestProvisioningChange {
         change
