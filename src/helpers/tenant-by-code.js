@@ -35,6 +35,7 @@ const query = `query tenant ($code: String!) {
       shippingState
       shippingStreet
       shippingZip
+      taxNumber
       timezone
       updatedAt
       website

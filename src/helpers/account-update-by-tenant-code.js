@@ -31,6 +31,7 @@ const query = `mutation accountUpdate ($id: ID!, $attributes: AccountAttributes!
         shippingState
         shippingStreet
         shippingZip
+        taxNumber
         timezone
         updatedAt
         website
