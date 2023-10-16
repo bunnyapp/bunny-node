@@ -59,10 +59,27 @@ module.exports = async function (priceListCode, options = {}) {
   } else {
     variables.attributes.account = {
       name: options["accountName"]?.toString(),
+      phone: options["phone"]?.toString(),
+      fax: options["fax"]?.toString(),
+      website: options["website"]?.toString(),
+      billingStreet: options["billingStreet"]?.toString(),
+      billingCity: options["billingCity"]?.toString(),
+      billingZip: options["billingZip"]?.toString(),
+      billingState: options["billingState"]?.toString(),
+      billingCountry: options["billingCountry"]?.toString(),
       billingContact: {
         firstName: options["firstName"]?.toString(),
         lastName: options["lastName"]?.toString(),
         email: options["email"]?.toString(),
+        phone: options["phone"]?.toString(),
+        mobile: options["mobile"]?.toString(),
+        salutation: options["salutation"]?.toString(),
+        title: options["title"]?.toString(),
+        mailingStreet: options["mailingStreet"]?.toString(),
+        mailingCity: options["mailingCity"]?.toString(),
+        mailingZip: options["mailingZip"]?.toString(),
+        mailingState: options["mailingState"]?.toString(),
+        mailingCountry: options["mailingCountry"]?.toString(),
       },
     };
   }
