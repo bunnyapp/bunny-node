@@ -59,6 +59,7 @@ module.exports = async function (priceListCode, options = {}) {
   } else {
     variables.attributes.account = {
       name: options["accountName"]?.toString(),
+      ownerUserId: options["ownerUserId"]?.toString(),
       phone: options["phone"]?.toString(),
       fax: options["fax"]?.toString(),
       website: options["website"]?.toString(),
