@@ -1,6 +1,6 @@
 {
   "name": "@bunnyapp/api-client",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "description": "Node.js client for Bunny CRM",
   "main": "index.js",
   "directories": {
@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/bunnyapp/bunny-node#readme",
   "dependencies": {
-    "axios": "^0.26.0",
+    "axios": "^1.6.2",
     "safe-buffer": "^5.2.1",
     "scmp": "^2.1.0"
   },

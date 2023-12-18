@@ -93,5 +93,6 @@ Bunny.prototype.tenantUpdate = require("./helpers/tenant-update.js");
 Bunny.prototype.featureUsageCreate = require("./helpers/feature-usage-create.js");
 Bunny.prototype.portalSessionCreate = require("./helpers/portal-session-create.js");
 Bunny.prototype.accountUpdateByTenantCode = require("./helpers/account-update-by-tenant-code.js");
+Bunny.prototype.tenantMetricsUpdate = require("./helpers/tenant-metrics-update.js");
 
 module.exports = Bunny;
