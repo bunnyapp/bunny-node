@@ -83,6 +83,11 @@ describe("Bunny", function () {
       bunny.accountUpdateByTenantCode("code", {});
       assert(query.calledOnce);
     });
+
+    it("should expose a tenantMetricsUpate method", function () {
+      bunny.tenantMetricsUpdate("code", "2023-12-01", 1, {});
+      assert(query.calledOnce);
+    });
   });
 });
 
