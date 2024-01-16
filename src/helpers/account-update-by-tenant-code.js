@@ -49,10 +49,15 @@ module.exports = async function (tenantCode, attributes) {
   };
 
   const res = await this.query(query, variables);
+  const accountUpdate = res?.data?.accountUpdate;
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());
   }
 
-  return res?.data?.accountUpdate?.account;
+  if (accountUpdate?.errors) {
+    throw new Error(accountUpdate.errors.join());
+  }
+
+  return accountUpdate?.account;
 };
