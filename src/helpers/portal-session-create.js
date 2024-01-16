@@ -24,10 +24,15 @@ module.exports = async function (
   };
 
   const res = await this.query(query, variables);
+  const portalSessionCreate = res?.data?.portalSessionCreate;
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());
   }
 
-  return res?.data?.portalSessionCreate?.token;
+  if (portalSessionCreate?.errors) {
+    throw new Error(portalSessionCreate.errors.join());
+  }
+
+  return portalSessionCreate?.token;
 };

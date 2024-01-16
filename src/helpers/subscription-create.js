@@ -93,10 +93,15 @@ module.exports = async function (priceListCode, options = {}) {
   }
 
   const res = await this.query(query, variables);
+  const subscriptionCreate = res?.data?.subscriptionCreate;
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());
   }
 
-  return res?.data?.subscriptionCreate?.subscription;
+  if (subscriptionCreate?.errors) {
+    throw new Error(subscriptionCreate.errors.join());
+  }
+
+  return subscriptionCreate?.subscription;
 };

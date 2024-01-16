@@ -15,9 +15,14 @@ module.exports = async function (subscriptionId) {
   };
 
   const res = await this.query(query, variables);
+  const subscriptionCancel = res?.data?.subscriptionCancel;
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());
+  }
+
+  if (subscriptionCancel?.errors) {
+    throw new Error(subscriptionCancel.errors.join());
   }
 
   return true;

@@ -41,10 +41,15 @@ module.exports = async function (
   };
 
   const res = await this.query(query, variables);
+  const tenantCreate = res?.data?.tenantCreate;
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());
   }
 
-  return res?.data?.tenantCreate?.tenant;
+  if (tenantCreate?.errors) {
+    throw new Error(tenantCreate.errors.join());
+  }
+
+  return tenantCreate?.tenant;
 };

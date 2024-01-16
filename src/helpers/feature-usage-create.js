@@ -46,10 +46,15 @@ module.exports = async function (
   }
 
   const res = await this.query(query, variables);
+  const featureUsageCreate = res?.data?.featureUsageCreate;
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());
   }
 
-  return res?.data?.featureUsageCreate?.featureUsage;
+  if (featureUsageCreate?.errors) {
+    throw new Error(featureUsageCreate.errors.join());
+  }
+
+  return featureUsageCreate?.featureUsage;
 };
