@@ -89,7 +89,7 @@ const res = await bunny.portalSessionCreate(
 const res = await bunny.featureUsageCreate(
   featureCode,
   quantity,
-  tenantCode,
+  subscriptionId,
   usageAt
 );
 

@@ -5,10 +5,8 @@ const query = `mutation featureUsageCreate ($attributes: FeatureUsageAttributes!
             id
             quantity
             usageAt
-            tenant {
+            subscription {
                 id
-                code
-                name
             }
             feature {
                 id
@@ -20,23 +18,23 @@ const query = `mutation featureUsageCreate ($attributes: FeatureUsageAttributes!
 }`;
 
 /**
- * Record feature usage for a tenant
+ * Record feature usage for a subscription
  * @param {string} featureCode Code for the feature that is being used
  * @param {number} quantity Amount of usage to record
- * @param {string} tenantCode Code for the tenant that has the usage
+ * @param {number} subscriptionId ID of the subscription that has the usage
  * @param {string} usageAt ISO8601 date string. Deafults to now
  * @returns
  */
 module.exports = async function (
   featureCode,
   quantity,
-  tenantCode,
+  subscriptionId,
   usageAt = null
 ) {
   let variables = {
     attributes: {
       quantity: quantity,
-      tenantCode: tenantCode,
+      subscriptionId: subscriptionId,
       featureCode: featureCode,
     },
   };

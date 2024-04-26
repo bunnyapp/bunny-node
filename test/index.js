@@ -34,59 +34,60 @@ describe("Bunny", function () {
 
   describe("Convenience methods", function () {
     let bunny = new Bunny({ baseUrl: "url", accessToken: "token" });
-    let query;
+    let queryStub;
 
     beforeEach(function () {
-      query = sinon.spy(bunny, "query");
+      queryStub = sinon.stub(Bunny.prototype, "query");
+      queryStub.returns({});
     });
 
     afterEach(function () {
-      query.restore();
+      queryStub.restore();
     });
 
     it("should expose a subscriptionCreate method", function () {
       bunny.subscriptionCreate("A", "F", "L", "E", "P", "D");
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose a featureUsageCreate method", function () {
       bunny.featureUsageCreate("Q", "D", "E", "F");
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose a subscriptionCancel method", function () {
       bunny.subscriptionCancel(1);
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose a portalSessionCreate method", function () {
       bunny.portalSessionCreate(1);
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose a tenantCreate method", function () {
       bunny.tenantCreate(1);
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose a tenantUpdate method", function () {
       bunny.tenantUpdate(1);
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose a tenantByCode method", function () {
       bunny.tenantByCode("code");
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose an accountUpdateByTenantCode method", function () {
       bunny.accountUpdateByTenantCode("code", {});
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
 
     it("should expose a tenantMetricsUpate method", function () {
       bunny.tenantMetricsUpdate("code", "2023-12-01", 1, {});
-      assert(query.calledOnce);
+      assert(queryStub.calledOnce);
     });
   });
 });
