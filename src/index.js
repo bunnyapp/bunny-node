@@ -41,8 +41,6 @@ class Bunny {
         return axios.request(error.config);
       }
 
-      console.log("Authorization error: ", error);
-
       if (error.response?.data?.error_description) {
         return Promise.reject(error.response.data.error_description);
       }

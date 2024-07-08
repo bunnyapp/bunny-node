@@ -1,6 +1,6 @@
 {
   "name": "@bunnyapp/api-client",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Node.js client for Bunny CRM",
   "main": "index.js",
   "directories": {
