@@ -45,7 +45,7 @@ class Bunny {
         return Promise.reject(error.response.data.error_description);
       }
 
-      return Promise.reject("Invalid access token");
+      return Promise.reject(error.response?.data);
     });
 
     this.webhooks = new Webhooks(options.webhookSigningToken);
