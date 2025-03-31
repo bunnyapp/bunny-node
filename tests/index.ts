@@ -1,7 +1,15 @@
-const assert = require("assert");
-const sinon = require("sinon");
+import assert from 'assert';
+import sinon from 'sinon';
+import { describe, it, beforeEach, afterEach } from 'mocha';
+import Bunny from '../src';
 
-const Bunny = require("../src");
+interface BunnyConfig {
+  baseUrl?: string;
+  accessToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  scope?: string;
+}
 
 describe("Bunny", function () {
   it("should expose a constructor", function () {
@@ -10,7 +18,7 @@ describe("Bunny", function () {
 
   it("should require a base url", function () {
     assert.throws(() => {
-      new Bunny({});
+      new Bunny({} as BunnyConfig);
     }, error("Bunny base url required"));
   });
 
@@ -33,10 +41,11 @@ describe("Bunny", function () {
   });
 
   describe("Convenience methods", function () {
-    let bunny = new Bunny({ baseUrl: "url", accessToken: "token" });
-    let queryStub;
+    let bunny: Bunny;
+    let queryStub: sinon.SinonStub;
 
     beforeEach(function () {
+      bunny = new Bunny({ baseUrl: "url", accessToken: "token" });
       queryStub = sinon.stub(Bunny.prototype, "query");
       queryStub.returns({});
     });
@@ -95,11 +104,11 @@ describe("Bunny", function () {
 /**
  * Assert an error with `message` is thrown.
  *
- * @param {String} message
- * @return {Function}
+ * @param {string} message
+ * @return {(err: Error) => boolean}
  */
-function error(message) {
-  return function (err) {
-    return err.message == message;
+function error(message: string): (err: Error) => boolean {
+  return function (err: Error): boolean {
+    return err.message === message;
   };
 }

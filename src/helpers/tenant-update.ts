@@ -1,3 +1,5 @@
+import { Tenant, TenantAttributes } from '../generated/graphql';
+
 const query = `mutation tenantUpdate ($id: ID!, $attributes: TenantAttributes!) {
   tenantUpdate (id: $id, attributes: $attributes) {
     tenant {
@@ -14,13 +16,30 @@ const query = `mutation tenantUpdate ($id: ID!, $attributes: TenantAttributes!) 
   }
 }`;
 
-module.exports = async function (id, code, name) {
-  let variables = {
-    id: id,
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: Array<{ message: string }>;
+}
+
+interface TenantUpdateResponse {
+  tenantUpdate?: {
+    tenant?: Tenant;
+    errors?: string[];
+  };
+}
+
+export default async function tenantUpdate(
+  this: { query: (query: string, variables: any) => Promise<GraphQLResponse<TenantUpdateResponse>> },
+  id: string,
+  code?: string,
+  name?: string
+): Promise<Tenant | undefined> {
+  const variables = {
+    id,
     attributes: {
       code: code?.toString(),
-      name: name,
-    },
+      name,
+    } as TenantAttributes,
   };
 
   const res = await this.query(query, variables);
@@ -35,4 +54,4 @@ module.exports = async function (id, code, name) {
   }
 
   return tenantUpdate?.tenant;
-};
+}

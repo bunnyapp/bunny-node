@@ -7,7 +7,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha"
+    "test": "mocha -r ts-node/register 'tests/**/*.ts'",
+    "generate-types": "node_modules/.bin/graphql-codegen"
   },
   "repository": {
     "type": "git",
@@ -27,13 +28,23 @@
   },
   "homepage": "https://github.com/bunnyapp/bunny-node#readme",
   "dependencies": {
-    "axios": "^1.6.2",
+    "axios": "^1.8.4",
     "safe-buffer": "^5.2.1",
     "scmp": "^2.1.0"
   },
   "devDependencies": {
+    "@0no-co/graphqlsp": "^1.12.16",
+    "@graphql-codegen/cli": "^5.0.5",
+    "@graphql-codegen/schema-ast": "^4.1.0",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.0",
+    "@parcel/watcher": "^2.5.1",
+    "@types/mocha": "^10.0.10",
+    "@types/sinon": "^17.0.4",
+    "dotenv": "^16.4.7",
     "mocha": "^9.2.0",
-    "sinon": "^14.0.0"
+    "sinon": "^14.0.0",
+    "ts-node": "^10.9.2"
   },
   "files": [
     "LICENSE",

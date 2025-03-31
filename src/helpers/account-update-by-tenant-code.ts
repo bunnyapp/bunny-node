@@ -1,3 +1,6 @@
+import { Account, AccountAttributes } from '../generated/graphql';
+import Bunny from '../';
+
 const query = `mutation accountUpdate ($id: ID!, $attributes: AccountAttributes!) {
   accountUpdate (id: $id, attributes: $attributes) {
       account {
@@ -40,15 +43,25 @@ const query = `mutation accountUpdate ($id: ID!, $attributes: AccountAttributes!
   }
 }`;
 
-module.exports = async function (tenantCode, attributes) {
-  let tenant = await this.tenantByCode(tenantCode);
+interface QueryResponse {
+  data?: {
+    accountUpdate?: {
+      account?: Account;
+      errors?: string[];
+    };
+  };
+  errors?: Array<{ message: string }>;
+}
 
-  let variables = {
+export default async function accountUpdateByTenantCode(this: Bunny, tenantCode: string, attributes: AccountAttributes): Promise<Account | undefined> {
+  const tenant = await this.tenantByCode(tenantCode);
+
+  const variables = {
     id: tenant.account.id,
     attributes: attributes,
   };
 
-  const res = await this.query(query, variables);
+  const res: QueryResponse = await this.query(query, variables);
   const accountUpdate = res?.data?.accountUpdate;
 
   if (res?.errors) {
