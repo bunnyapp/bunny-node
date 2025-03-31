@@ -2,11 +2,14 @@
   "name": "@bunnyapp/api-client",
   "version": "2.2.4",
   "description": "Node.js client for Bunny CRM",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "directories": {
     "test": "tests"
   },
   "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
     "test": "mocha -r ts-node/register 'tests/**/*.ts'",
     "generate-types": "node_modules/.bin/graphql-codegen"
   },
@@ -49,7 +52,7 @@
   "files": [
     "LICENSE",
     "README.md",
-    "index.js",
-    "src/"
+    "dist",
+    "src"
   ]
 }
