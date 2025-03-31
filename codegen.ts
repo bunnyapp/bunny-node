@@ -12,10 +12,15 @@ const config: CodegenConfig = {
   documents: ['src/**/*.ts'],
   ignoreNoDocuments: true,
   generates: {
-    './src/generated/': {
-      preset: 'client',
+    './src/generated/graphql.ts': {
+      plugins: [
+        'typescript',
+        'typescript-operations'
+      ],
       config: {
-        documentMode: 'string'
+        avoidOptionals: false,
+        maybeValue: 'T | null',
+        enumsAsTypes: true
       }
     },
     './schema.graphql': {
