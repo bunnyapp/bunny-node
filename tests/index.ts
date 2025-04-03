@@ -65,7 +65,7 @@ describe("Bunny", function () {
     });
 
     it("should expose a subscriptionCancel method", function () {
-      bunny.subscriptionCancel("subscription-id");
+      bunny.subscriptionCancel(1);
       assert.ok(queryStub.calledOnce);
     });
 
