@@ -1,3 +1,6 @@
+import Bunny from '../';
+import { Query, Tenant } from '../types/graphql';
+
 const query = `query tenant ($code: String!) {
   tenant (code: $code) {
     id
@@ -51,20 +54,25 @@ const query = `query tenant ($code: String!) {
 }`;
 
 /**
- *
- * @param {string} code Unique code for the tenant
- * @returns {object} Tenant object
+ * Fetches tenant information by code
+ * @param {string} code - Unique code for the tenant
+ * @returns {Promise<NonNullable<Query['tenant']>>} Tenant object
  */
-module.exports = async function (code) {
-  let variables = {
-    code: code,
+export default async function getTenantByCode(
+  this: Bunny,
+  code: string
+): Promise<NonNullable<Query['tenant']> | undefined> {
+  const variables = {
+    code,
   };
 
-  const res = await this.query(query, variables);
+  const res = await this.query<{
+    tenant: NonNullable<Query['tenant']>
+  }>(query, variables);
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());
   }
 
   return res?.data?.tenant;
-};
+}

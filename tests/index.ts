@@ -1,7 +1,15 @@
-const assert = require("assert");
-const sinon = require("sinon");
+import * as assert from 'assert';
+import sinon from 'sinon';
+import { describe, it, beforeEach, afterEach } from 'mocha';
+import Bunny from '../src';
 
-const Bunny = require("../src");
+interface BunnyConfig {
+  baseUrl?: string;
+  accessToken?: string;
+  clientId?: string;
+  clientSecret?: string;
+  scope?: string;
+}
 
 describe("Bunny", function () {
   it("should expose a constructor", function () {
@@ -10,7 +18,7 @@ describe("Bunny", function () {
 
   it("should require a base url", function () {
     assert.throws(() => {
-      new Bunny({});
+      new Bunny({} as BunnyConfig);
     }, error("Bunny base url required"));
   });
 
@@ -33,10 +41,11 @@ describe("Bunny", function () {
   });
 
   describe("Convenience methods", function () {
-    let bunny = new Bunny({ baseUrl: "url", accessToken: "token" });
-    let queryStub;
+    let bunny: Bunny;
+    let queryStub: sinon.SinonStub;
 
     beforeEach(function () {
+      bunny = new Bunny({ baseUrl: "url", accessToken: "token" });
       queryStub = sinon.stub(Bunny.prototype, "query");
       queryStub.returns({});
     });
@@ -46,48 +55,48 @@ describe("Bunny", function () {
     });
 
     it("should expose a subscriptionCreate method", function () {
-      bunny.subscriptionCreate("A", "F", "L", "E", "P", "D");
-      assert(queryStub.calledOnce);
+      bunny.subscriptionCreate("priceListCode", {});
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a featureUsageCreate method", function () {
-      bunny.featureUsageCreate("Q", "D", "E", "F");
-      assert(queryStub.calledOnce);
+      bunny.featureUsageCreate("featureCode", 1, "subscriptionId", "2023-12-01");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a subscriptionCancel method", function () {
       bunny.subscriptionCancel(1);
-      assert(queryStub.calledOnce);
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a portalSessionCreate method", function () {
-      bunny.portalSessionCreate(1);
-      assert(queryStub.calledOnce);
+      bunny.portalSessionCreate("tenant-code");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantCreate method", function () {
-      bunny.tenantCreate(1);
-      assert(queryStub.calledOnce);
+      bunny.tenantCreate("code", "name", "platform-id", "owner-id", "email");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantUpdate method", function () {
-      bunny.tenantUpdate(1);
-      assert(queryStub.calledOnce);
+      bunny.tenantUpdate("tenant-id", "new-name");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantByCode method", function () {
       bunny.tenantByCode("code");
-      assert(queryStub.calledOnce);
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose an accountUpdateByTenantCode method", function () {
       bunny.accountUpdateByTenantCode("code", {});
-      assert(queryStub.calledOnce);
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantMetricsUpate method", function () {
       bunny.tenantMetricsUpdate("code", "2023-12-01", 1, {});
-      assert(queryStub.calledOnce);
+      assert.ok(queryStub.calledOnce);
     });
   });
 });
@@ -95,11 +104,11 @@ describe("Bunny", function () {
 /**
  * Assert an error with `message` is thrown.
  *
- * @param {String} message
- * @return {Function}
+ * @param {string} message
+ * @return {(err: Error) => boolean}
  */
-function error(message) {
-  return function (err) {
-    return err.message == message;
+function error(message: string): (err: Error) => boolean {
+  return function (err: Error): boolean {
+    return err.message === message;
   };
 }
