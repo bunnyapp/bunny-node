@@ -1,4 +1,4 @@
-import assert from 'assert';
+import * as assert from 'assert';
 import sinon from 'sinon';
 import { describe, it, beforeEach, afterEach } from 'mocha';
 import Bunny from '../src';
@@ -55,48 +55,48 @@ describe("Bunny", function () {
     });
 
     it("should expose a subscriptionCreate method", function () {
-      bunny.subscriptionCreate("A", "F", "L", "E", "P", "D");
-      assert(queryStub.calledOnce);
+      bunny.subscriptionCreate("priceListCode", {});
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a featureUsageCreate method", function () {
-      bunny.featureUsageCreate("Q", "D", "E", "F");
-      assert(queryStub.calledOnce);
+      bunny.featureUsageCreate("featureCode", 1, "subscriptionId", "2023-12-01");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a subscriptionCancel method", function () {
-      bunny.subscriptionCancel(1);
-      assert(queryStub.calledOnce);
+      bunny.subscriptionCancel("subscription-id");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a portalSessionCreate method", function () {
-      bunny.portalSessionCreate(1);
-      assert(queryStub.calledOnce);
+      bunny.portalSessionCreate("tenant-code");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantCreate method", function () {
-      bunny.tenantCreate(1);
-      assert(queryStub.calledOnce);
+      bunny.tenantCreate("code", "name", "platform-id", "owner-id", "email");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantUpdate method", function () {
-      bunny.tenantUpdate(1);
-      assert(queryStub.calledOnce);
+      bunny.tenantUpdate("tenant-id", "new-name");
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantByCode method", function () {
       bunny.tenantByCode("code");
-      assert(queryStub.calledOnce);
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose an accountUpdateByTenantCode method", function () {
       bunny.accountUpdateByTenantCode("code", {});
-      assert(queryStub.calledOnce);
+      assert.ok(queryStub.calledOnce);
     });
 
     it("should expose a tenantMetricsUpate method", function () {
       bunny.tenantMetricsUpdate("code", "2023-12-01", 1, {});
-      assert(queryStub.calledOnce);
+      assert.ok(queryStub.calledOnce);
     });
   });
 });

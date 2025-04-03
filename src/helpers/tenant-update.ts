@@ -1,4 +1,5 @@
-import { Tenant, TenantAttributes } from '../generated/graphql';
+import Bunny from '../';
+import { Mutation, TenantAttributes } from '../types/graphql';
 
 const query = `mutation tenantUpdate ($id: ID!, $attributes: TenantAttributes!) {
   tenantUpdate (id: $id, attributes: $attributes) {
@@ -16,24 +17,19 @@ const query = `mutation tenantUpdate ($id: ID!, $attributes: TenantAttributes!) 
   }
 }`;
 
-interface GraphQLResponse<T> {
-  data?: T;
-  errors?: Array<{ message: string }>;
-}
-
-interface TenantUpdateResponse {
-  tenantUpdate?: {
-    tenant?: Tenant;
-    errors?: string[];
-  };
-}
-
+/**
+ * Updates an existing tenant
+ * @param {string} id The ID of the tenant to update
+ * @param {string} code New code for the tenant
+ * @param {string} name New name for the tenant
+ * @returns {Promise<NonNullable<Mutation['tenantUpdate']>['tenant']>} The updated tenant
+ */
 export default async function tenantUpdate(
-  this: { query: (query: string, variables: any) => Promise<GraphQLResponse<TenantUpdateResponse>> },
+  this: Bunny,
   id: string,
   code?: string,
   name?: string
-): Promise<Tenant | undefined> {
+): Promise<NonNullable<NonNullable<Mutation['tenantUpdate']>['tenant']> | undefined> {
   const variables = {
     id,
     attributes: {
@@ -42,7 +38,10 @@ export default async function tenantUpdate(
     } as TenantAttributes,
   };
 
-  const res = await this.query(query, variables);
+  const res = await this.query<{
+    tenantUpdate: NonNullable<Mutation['tenantUpdate']>
+  }>(query, variables);
+
   const tenantUpdate = res?.data?.tenantUpdate;
 
   if (res?.errors) {
@@ -53,5 +52,5 @@ export default async function tenantUpdate(
     throw new Error(tenantUpdate.errors.join());
   }
 
-  return tenantUpdate?.tenant;
+  return tenantUpdate?.tenant ?? undefined;
 }

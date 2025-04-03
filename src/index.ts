@@ -12,6 +12,9 @@ import portalSessionCreate from "./helpers/portal-session-create";
 import accountUpdateByTenantCode from "./helpers/account-update-by-tenant-code";
 import tenantMetricsUpdate from "./helpers/tenant-metrics-update";
 
+// Export all types for consumers
+export * from './types';
+
 declare module 'axios' {
   interface InternalAxiosRequestConfig {
     retry?: boolean;
@@ -37,16 +40,16 @@ class Bunny {
   client!: AxiosInstance;
   webhooks!: Webhooks;
 
-  // Declare method types
-  subscriptionCreate!: Function;
-  subscriptionCancel!: Function;
-  tenantByCode!: Function;
-  tenantCreate!: Function;
-  tenantUpdate!: Function;
-  featureUsageCreate!: Function;
-  portalSessionCreate!: Function;
-  accountUpdateByTenantCode!: Function;
-  tenantMetricsUpdate!: Function;
+  // Properly type the helper methods
+  subscriptionCreate!: typeof subscriptionCreate;
+  subscriptionCancel!: typeof subscriptionCancel;
+  tenantByCode!: typeof tenantByCode;
+  tenantCreate!: typeof tenantCreate;
+  tenantUpdate!: typeof tenantUpdate;
+  featureUsageCreate!: typeof featureUsageCreate;
+  portalSessionCreate!: typeof portalSessionCreate;
+  accountUpdateByTenantCode!: typeof accountUpdateByTenantCode;
+  tenantMetricsUpdate!: typeof tenantMetricsUpdate;
 
   constructor(options: BunnyOptions = {}) {
     if (!(this instanceof Bunny)) return new Bunny(options);
@@ -111,8 +114,18 @@ class Bunny {
     return res?.data?.access_token;
   }
 
-  // Add generic type parameter T for GraphQL response typing
-  async query<T = unknown>(query: string, variables?: Record<string, any>): Promise<T> {
+  /**
+   * Execute a GraphQL query against the Bunny API
+   * @template TData The expected shape of the response data
+   * @template TVariables The shape of the variables object
+   * @param {string} query The GraphQL query string
+   * @param {TVariables} [variables] Optional variables for the query
+   * @returns {Promise<{ data?: TData; errors?: Array<{ message: string }> }>}
+   */
+  async query<TData = unknown, TVariables = Record<string, unknown>>(
+    query: string,
+    variables?: TVariables
+  ): Promise<{ data?: TData; errors?: Array<{ message: string }> }> {
     const body = {
       query,
       variables,
@@ -128,7 +141,7 @@ class Bunny {
       },
     });
 
-    return res.data as T; // Cast to the generic type T
+    return res.data;
   }
 }
 
@@ -143,4 +156,7 @@ Bunny.prototype.portalSessionCreate = portalSessionCreate;
 Bunny.prototype.accountUpdateByTenantCode = accountUpdateByTenantCode;
 Bunny.prototype.tenantMetricsUpdate = tenantMetricsUpdate;
 
+// Support both default export and CommonJS module.exports
 export default Bunny;
+module.exports = Bunny;
+module.exports.default = Bunny;

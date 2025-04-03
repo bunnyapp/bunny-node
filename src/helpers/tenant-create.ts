@@ -1,36 +1,5 @@
 import Bunny from '../';
-
-interface TenantAttributes {
-  name: string;
-  code: string;
-  accountId: number;
-  platformCode: string;
-}
-
-interface Platform {
-  id: string;
-  name: string;
-  code: string;
-}
-
-interface Tenant {
-  code: string;
-  id: string;
-  name: string;
-  platform: Platform;
-}
-
-interface TenantCreateResponse {
-  tenant: Tenant;
-  errors?: string[];
-}
-
-interface GraphQLResponse {
-  data?: {
-    tenantCreate?: TenantCreateResponse;
-  };
-  errors?: Array<{ message: string }>;
-}
+import { Mutation, TenantAttributes } from '../types/graphql';
 
 const query = `mutation tenantCreate ($attributes: TenantAttributes!, $subscriptionId: ID!) {
   tenantCreate (attributes: $attributes, subscriptionId: $subscriptionId) {
@@ -53,29 +22,32 @@ const query = `mutation tenantCreate ($attributes: TenantAttributes!, $subscript
  * @param {string} name Account name of the tenant
  * @param {string} code Unique code for the tenant
  * @param {string} platformCode Code for the platform that the tenant is on
- * @param {number} accountId Id of the account that the tenant is being created for
- * @param {number} subscriptionId Id of the subscription that the tenant is being created for
- * @returns {Promise<Tenant>} The created tenant
+ * @param {string} accountId Id of the account that the tenant is being created for
+ * @param {string} subscriptionId Id of the subscription that the tenant is being created for
+ * @returns {Promise<NonNullable<Mutation['tenantCreate']>['tenant']>} The created tenant
  */
 export default async function tenantCreate(
   this: Bunny,
   name: string,
   code: string,
   platformCode: string,
-  accountId: number,
-  subscriptionId: number
-): Promise<Tenant> {
+  accountId: string,
+  subscriptionId: string
+): Promise<NonNullable<NonNullable<Mutation['tenantCreate']>['tenant']>> {
   const variables = {
     attributes: {
       name,
       code,
       accountId,
       platformCode,
-    },
+    } as TenantAttributes,
     subscriptionId,
   };
 
-  const res: GraphQLResponse = await this.query(query, variables);
+  const res = await this.query<{
+    tenantCreate: NonNullable<Mutation['tenantCreate']>
+  }>(query, variables);
+
   const tenantCreate = res?.data?.tenantCreate;
 
   if (res?.errors) {

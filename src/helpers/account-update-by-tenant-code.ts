@@ -1,4 +1,4 @@
-import { Account, AccountAttributes } from '../generated/graphql';
+import { Account, AccountAttributes, Mutation } from '../generated/graphql';
 import Bunny from '../';
 
 const query = `mutation accountUpdate ($id: ID!, $attributes: AccountAttributes!) {
@@ -43,34 +43,36 @@ const query = `mutation accountUpdate ($id: ID!, $attributes: AccountAttributes!
   }
 }`;
 
-interface QueryResponse {
-  data?: {
-    accountUpdate?: {
-      account?: Account;
-      errors?: string[];
-    };
-  };
-  errors?: Array<{ message: string }>;
-}
-
-export default async function accountUpdateByTenantCode(this: Bunny, tenantCode: string, attributes: AccountAttributes): Promise<Account | undefined> {
+/**
+ * Update an account by tenant code
+ * @param {string} tenantCode The unique code that represents the tenant
+ * @param {AccountAttributes} attributes The attributes to update the account with
+ * @returns {Promise<NonNullable<NonNullable<Mutation['accountUpdate']>['account']> | undefined>} The updated account
+ */
+export default async function accountUpdateByTenantCode(this: Bunny, tenantCode: string, attributes: AccountAttributes): Promise<NonNullable<NonNullable<Mutation['accountUpdate']>['account']> | undefined> {
   const tenant = await this.tenantByCode(tenantCode);
+  if (!tenant) {
+    throw new Error('Tenant not found');
+  }
 
   const variables = {
     id: tenant.account.id,
     attributes: attributes,
   };
 
-  const res: QueryResponse = await this.query(query, variables);
+  const res = await this.query<{
+    accountUpdate: NonNullable<Mutation['accountUpdate']>
+  }>(query, variables);
+
   const accountUpdate = res?.data?.accountUpdate;
 
   if (res?.errors) {
-    throw new Error(res.errors.map((e) => e.message).join());
+    throw new Error(Array.isArray(res.errors) ? res.errors.map(e => e.message).join() : res.errors);
   }
 
   if (accountUpdate?.errors) {
-    throw new Error(accountUpdate.errors.join());
+    throw new Error(Array.isArray(accountUpdate.errors) ? accountUpdate.errors.join() : accountUpdate.errors);
   }
 
-  return accountUpdate?.account;
-};
+  return accountUpdate?.account ?? undefined;
+}

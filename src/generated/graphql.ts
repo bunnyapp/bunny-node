@@ -6659,7 +6659,9 @@ export type PriceListAttributes = {
 
 export type PriceListChangeOptions = {
   __typename?: 'PriceListChangeOptions';
+  plans?: Maybe<Array<Plan>>;
   priceLists?: Maybe<Array<PriceList>>;
+  products?: Maybe<Array<Product>>;
 };
 
 export type PriceListCharge = {
@@ -8341,6 +8343,7 @@ export type QueryPriceListArgs = {
 
 
 export type QueryPriceListChangeOptionsArgs = {
+  productId?: InputMaybe<Scalars['ID']['input']>;
   subscriptionId?: InputMaybe<Scalars['ID']['input']>;
 };
 

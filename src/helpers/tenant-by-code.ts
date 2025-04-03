@@ -1,65 +1,5 @@
 import Bunny from '../';
-
-interface Account {
-  accountTypeId: string;
-  addressValidated: boolean;
-  annualRevenue: number;
-  billingCity: string;
-  billingContactId: string;
-  billingCountry: string;
-  billingDay: number;
-  billingState: string;
-  billingStreet: string;
-  billingZip: string;
-  code: string;
-  createdAt: string;
-  currencyId: string;
-  description: string;
-  duns: string;
-  employees: number;
-  entityUseCode: string;
-  fax: string;
-  groupId: string;
-  id: string;
-  industryId: string;
-  name: string;
-  netPaymentDays: number;
-  ownerUserId: string;
-  phone: string;
-  shippingCity: string;
-  shippingCountry: string;
-  shippingState: string;
-  shippingStreet: string;
-  shippingZip: string;
-  taxNumber: string;
-  timezone: string;
-  updatedAt: string;
-  website: string;
-}
-
-interface ProvisioningChange {
-  change: string;
-  createdAt: string;
-  features: string[];
-  id: string;
-  updatedAt: string;
-}
-
-interface Tenant {
-  id: string;
-  code: string;
-  name: string;
-  subdomain: string;
-  account: Account;
-  latestProvisioningChange: ProvisioningChange;
-}
-
-interface QueryResponse {
-  data?: {
-    tenant: Tenant;
-  };
-  errors?: Array<{ message: string }>;
-}
+import { Query, Tenant } from '../types/graphql';
 
 const query = `query tenant ($code: String!) {
   tenant (code: $code) {
@@ -116,17 +56,19 @@ const query = `query tenant ($code: String!) {
 /**
  * Fetches tenant information by code
  * @param {string} code - Unique code for the tenant
- * @returns {Promise<Tenant | undefined>} Tenant object
+ * @returns {Promise<NonNullable<Query['tenant']>>} Tenant object
  */
 export default async function getTenantByCode(
   this: Bunny,
   code: string
-): Promise<Tenant | undefined> {
+): Promise<NonNullable<Query['tenant']> | undefined> {
   const variables = {
     code,
   };
 
-  const res: QueryResponse = await this.query(query, variables);
+  const res = await this.query<{
+    tenant: NonNullable<Query['tenant']>
+  }>(query, variables);
 
   if (res?.errors) {
     throw new Error(res.errors.map((e) => e.message).join());

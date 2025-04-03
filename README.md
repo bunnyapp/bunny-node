@@ -71,101 +71,63 @@ const bunny = new BunnyClient({
 
 ## Helper methods
 
-This SDK wrappers several of the common Bunny API requests. The response varies based on the method that is used.
+This SDK provides helper methods for common Bunny API operations. The response types match the GraphQL schema.
 
 **TypeScript:**
 
 ```typescript
-interface BillingContact {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  mobile?: string;
-  salutation?: string;
-  title?: string;
-  mailingStreet?: string;
-  mailingCity?: string;
-  mailingZip?: string;
-  mailingState?: string;
-  mailingCountry?: string;
-}
-
-interface SubscriptionOptions {
-  trial?: boolean;
-  evergreen?: boolean;
-  accountId?: string;
-  accountName?: string;
-  ownerUserId?: string;
-  phone?: string;
-  fax?: string;
-  website?: string;
-  billingStreet?: string;
-  billingCity?: string;
-  billingZip?: string;
-  billingState?: string;
-  billingCountry?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  mobile?: string;
-  salutation?: string;
-  title?: string;
-  mailingStreet?: string;
-  mailingCity?: string;
-  mailingZip?: string;
-  mailingState?: string;
-  mailingCountry?: string;
-  tenantCode?: string;
-  tenantName?: string;
-}
-
-interface SubscriptionResponse {
-  id: string;
-  account: {
-    id: string;
-    name: string;
-    contacts: Array<{
-      id: string;
-      firstName: string;
-      lastName: string;
-    }>;
-  };
-  trialStartDate: string;
-  trialEndDate: string;
-  startDate: string;
-  endDate: string;
-  state: string;
-  plan: {
-    code: string;
-    name: string;
-  };
-  priceList: {
-    code: string;
-    name: string;
-  };
-  tenant: {
-    id: string;
-    code: string;
-    name: string;
-    account: {
-      id: string;
-      name: string;
-      billingDay: number;
-    };
-  };
-}
+import {
+  SubscriptionOptions,
+  Subscription,
+  Mutation,
+  Tenants,
+} from "@bunnyapp/api-client";
 
 // Create a new subscription
-const subscription = await bunny.subscriptionCreate("priceListCode", {
-  trial: true,
-  evergreen: true,
-  accountName: "accountName",
-  firstName: "firstName",
-  lastName: "lastName",
-  email: "email@example.com",
-  tenantCode: "remoteId",
-});
+const subscription: Subscription = await bunny.subscriptionCreate(
+  "priceListCode",
+  {
+    // Subscription settings
+    trial: false, // Optional: Start with a trial period
+    evergreen: true, // Optional: Auto-renew subscription
+
+    // Account identification (Must use either accountId OR account details)
+    accountId: "existing-123", // Required unless using accountName: Use existing account
+
+    // Account details (used if accountId is not provided)
+    accountName: "Acme Corp", // Required unless using accountId: Company/Account name
+    ownerUserId: "user-123",
+    phone: "555-0123",
+    fax: "555-0124",
+    website: "www.acme.com",
+
+    // Optional: Billing address
+    billingStreet: "123 Main St",
+    billingCity: "San Francisco",
+    billingZip: "94105",
+    billingState: "CA",
+    billingCountry: "US",
+
+    // Billing contact information
+    firstName: "John", // Required
+    lastName: "Doe",
+    email: "john@acme.com", // Required
+    mobile: "555-0125",
+    salutation: "Mr",
+    title: "CEO",
+
+    // Optional: Billing contact mailing address
+    mailingStreet: "456 Market St",
+    mailingCity: "San Francisco",
+    mailingZip: "94105",
+    mailingState: "CA",
+    mailingCountry: "US",
+
+    // Optional: Tenant information
+    tenantCode: "tenant-123",
+    tenantName: "Acme Team",
+  }
+);
 
 // Get a session token for the Bunny customer portal
 const portalSession = await bunny.portalSessionCreate("tenantCode");
@@ -206,13 +168,45 @@ const updatedAccount = await bunny.accountUpdateByTenantCode("tenantCode", {
 ```javascript
 // Create a new subscription
 const subscription = await bunny.subscriptionCreate("priceListCode", {
-  trial: true,
-  evergreen: true,
-  accountName: "accountName",
-  firstName: "firstName",
-  lastName: "lastName",
-  email: "email@example.com",
-  tenantCode: "remoteId",
+  // Subscription settings
+  trial: false, // Optional: Start with a trial period
+  evergreen: true, // Optional: Auto-renew subscription
+
+  // Account identification (Must use either accountId OR account details)
+  accountId: "existing-123", // Required unless using accountName: Use existing account
+
+  // Account details (used if accountId is not provided)
+  accountName: "Acme Corp", // Required unless using accountId: Company/Account name
+  ownerUserId: "user-123",
+  phone: "555-0123",
+  fax: "555-0124",
+  website: "www.acme.com",
+
+  // Optional: Billing address
+  billingStreet: "123 Main St",
+  billingCity: "San Francisco",
+  billingZip: "94105",
+  billingState: "CA",
+  billingCountry: "US",
+
+  // Billing contact information
+  firstName: "John", // Required
+  lastName: "Doe",
+  email: "john@acme.com", // Required
+  mobile: "555-0125",
+  salutation: "Mr",
+  title: "CEO",
+
+  // Optional: Billing contact mailing address
+  mailingStreet: "456 Market St",
+  mailingCity: "San Francisco",
+  mailingZip: "94105",
+  mailingState: "CA",
+  mailingCountry: "US",
+
+  // Optional: Tenant information
+  tenantCode: "tenant-123",
+  tenantName: "Acme Team",
 });
 
 // Get a session token for the Bunny customer portal
@@ -256,12 +250,17 @@ If there is an error with a helper method an exception will be raised.
 **TypeScript:**
 
 ```typescript
+import { Subscription } from "@bunnyapp/api-client";
+
 try {
-  const subscription = await bunny.subscriptionCreate("priceListCode", {
-    trial: true,
-    evergreen: true,
-    accountName: "Test Account",
-  });
+  const subscription: Subscription = await bunny.subscriptionCreate(
+    "priceListCode",
+    {
+      trial: true,
+      evergreen: true,
+      accountName: "Test Account",
+    }
+  );
   // Handle successful subscription
 } catch (error) {
   if (error instanceof Error) {
@@ -276,7 +275,7 @@ bunny
     evergreen: true,
     accountName: "Test Account",
   })
-  .then((subscription) => {
+  .then((subscription: Subscription) => {
     // Handle successful subscription
   })
   .catch((error: Error) => {
@@ -313,35 +312,16 @@ bunny
   });
 ```
 
-## Perform a query
+## Direct GraphQL queries
 
-If the convenience methods on this SDK are not enough and you need more control over queries or mutations then you can make an async request against the Bunny GraphQL API.
-
-The response will contain the raw graphql json.
+If the helper methods don't cover your needs, you can make direct GraphQL queries. The SDK provides full TypeScript support for the GraphQL schema.
 
 **TypeScript:**
 
 ```typescript
-interface QueryVariables {
-  filter: string;
-  limit: number;
-}
+import { Tenants } from "@bunnyapp/api-client";
 
-interface TenantsResponse {
-  data: {
-    tenants: Array<{
-      platform: {
-        id: string;
-        name: string;
-        code: string;
-      };
-      id: string;
-      name: string;
-      code: string;
-    }>;
-  };
-}
-
+// Example using generated GraphQL types
 const query = `query tenants ($filter: String, $limit: Int) {
     tenants (filter: $filter, limit: $limit) {
         platform {
@@ -355,12 +335,16 @@ const query = `query tenants ($filter: String, $limit: Int) {
     }
 }`;
 
-const variables: QueryVariables = {
+const variables = {
   filter: "",
   limit: 10,
 };
 
-const response = await bunny.query<TenantsResponse>(query, variables);
+// Use the generated Tenants type instead of custom TenantsResponse interface
+const response = await bunny.query<{ data: { tenants: Tenants[] } }>(
+  query,
+  variables
+);
 ```
 
 **JavaScript:**

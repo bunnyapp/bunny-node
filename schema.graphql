@@ -5282,7 +5282,9 @@ input PriceListAttributes {
 }
 
 type PriceListChangeOptions {
+  plans: [Plan!]
   priceLists: [PriceList!]
+  products: [Product!]
 }
 
 type PriceListCharge {
@@ -6696,7 +6698,9 @@ type Query {
   """ [REQUIRED_SCOPES:product:read]"""
   priceList(code: String, format: String, id: ID): PriceList
   priceListChangeOptions(
-    """The subscription ID"""
+    """Product ID to filter available price lists"""
+    productId: ID
+    """Subscription ID to filter available price lists"""
     subscriptionId: ID
   ): PriceListChangeOptions!
   """ [REQUIRED_SCOPES:product:read]"""

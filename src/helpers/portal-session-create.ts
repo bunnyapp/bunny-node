@@ -1,14 +1,5 @@
 import Bunny from '../';
-
-interface PortalSessionCreateResponse {
-  data?: {
-    portalSessionCreate?: {
-      errors?: string[];
-      token?: string;
-    };
-  };
-  errors?: Array<{ message: string }>;
-}
+import { Mutation } from '../types/graphql';
 
 const query = `mutation portalSessionCreate ($tenantCode: String!, $expiry: Int!, $returnUrl: String!) {
   portalSessionCreate (tenantCode: $tenantCode, expiry: $expiry, returnUrl: $returnUrl) {
@@ -27,7 +18,7 @@ const query = `mutation portalSessionCreate ($tenantCode: String!, $expiry: Int!
 export default async function portalSessionCreate(
   this: Bunny,
   tenantCode: string,
-  returnUrl: string | null = null,
+  returnUrl: string = '',
   expiryInHours: number = 24
 ): Promise<string> {
   const variables = {
@@ -36,15 +27,18 @@ export default async function portalSessionCreate(
     expiry: expiryInHours,
   };
 
-  const res: PortalSessionCreateResponse = await this.query(query, variables);
+  const res = await this.query<{
+    portalSessionCreate: NonNullable<Mutation['portalSessionCreate']>
+  }>(query, variables);
+
   const portalSessionCreate = res?.data?.portalSessionCreate;
 
   if (res?.errors) {
-    throw new Error(res.errors.map((e) => e.message).join());
+    throw new Error(Array.isArray(res.errors) ? res.errors.map(e => e.message).join() : res.errors);
   }
 
   if (portalSessionCreate?.errors) {
-    throw new Error(portalSessionCreate.errors.join());
+    throw new Error(Array.isArray(portalSessionCreate.errors) ? portalSessionCreate.errors.join() : portalSessionCreate.errors);
   }
 
   if (!portalSessionCreate?.token) {

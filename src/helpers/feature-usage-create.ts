@@ -1,5 +1,5 @@
-import { FeatureUsage, FeatureUsageAttributes } from '../generated/graphql';
 import Bunny from '../';
+import { Mutation, FeatureUsageAttributes } from '../types/graphql';
 
 const query = `mutation featureUsageCreate ($attributes: FeatureUsageAttributes!) {
     featureUsageCreate (attributes: $attributes) {
@@ -20,23 +20,13 @@ const query = `mutation featureUsageCreate ($attributes: FeatureUsageAttributes!
     }
 }`;
 
-interface QueryResponse {
-  data?: {
-    featureUsageCreate?: {
-      featureUsage?: FeatureUsage;
-      errors?: string[];
-    };
-  };
-  errors?: Array<{ message: string }>;
-}
-
 /**
  * Record feature usage for a subscription
  * @param {string} featureCode Code for the feature that is being used
  * @param {number} quantity Amount of usage to record
- * @param {number} subscriptionId ID of the subscription that has the usage
+ * @param {string} subscriptionId ID of the subscription that has the usage
  * @param {string} usageAt ISO8601 date string. Defaults to now
- * @returns {Promise<FeatureUsage>}
+ * @returns {Promise<NonNullable<NonNullable<Mutation['featureUsageCreate']>['featureUsage']>>}
  */
 export default async function featureUsageCreate(
   this: Bunny,
@@ -44,7 +34,7 @@ export default async function featureUsageCreate(
   quantity: number,
   subscriptionId: string,
   usageAt: string | null = null
-): Promise<FeatureUsage> {
+): Promise<NonNullable<NonNullable<Mutation['featureUsageCreate']>['featureUsage']>> {
   const variables: {
     attributes: FeatureUsageAttributes;
   } = {
@@ -59,15 +49,18 @@ export default async function featureUsageCreate(
     variables.attributes.usageAt = usageAt;
   }
 
-  const res: QueryResponse = await this.query(query, variables);
+  const res = await this.query<{
+    featureUsageCreate: NonNullable<Mutation['featureUsageCreate']>
+  }>(query, variables);
+
   const featureUsageCreate = res?.data?.featureUsageCreate;
 
   if (res?.errors) {
-    throw new Error(res.errors.map((e: { message: string }) => e.message).join());
+    throw new Error(Array.isArray(res.errors) ? res.errors.map(e => e.message).join() : res.errors);
   }
 
   if (featureUsageCreate?.errors) {
-    throw new Error(featureUsageCreate.errors.join());
+    throw new Error(Array.isArray(featureUsageCreate.errors) ? featureUsageCreate.errors.join() : featureUsageCreate.errors);
   }
 
   if (!featureUsageCreate?.featureUsage) {

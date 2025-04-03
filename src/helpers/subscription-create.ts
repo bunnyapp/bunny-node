@@ -1,47 +1,5 @@
 import Bunny from '../';
-
-interface BillingContact {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  mobile?: string;
-  salutation?: string;
-  title?: string;
-  mailingStreet?: string;
-  mailingCity?: string;
-  mailingZip?: string;
-  mailingState?: string;
-  mailingCountry?: string;
-}
-
-interface Account {
-  name?: string;
-  ownerUserId?: string;
-  phone?: string;
-  fax?: string;
-  website?: string;
-  billingStreet?: string;
-  billingCity?: string;
-  billingZip?: string;
-  billingState?: string;
-  billingCountry?: string;
-  billingContact?: BillingContact;
-}
-
-interface Tenant {
-  code: string;
-  name?: string;
-}
-
-interface SubscriptionAttributes {
-  priceListCode: string;
-  trial: boolean;
-  evergreen: boolean;
-  accountId?: string;
-  account?: Account;
-  tenant?: Tenant;
-}
+import { Mutation } from '../types/graphql';
 
 interface SubscriptionOptions {
   trial?: boolean;
@@ -70,52 +28,6 @@ interface SubscriptionOptions {
   mailingCountry?: string;
   tenantCode?: string;
   tenantName?: string;
-}
-
-interface SubscriptionResponse {
-  subscription?: {
-    id: string;
-    account: {
-      id: string;
-      name: string;
-      contacts: Array<{
-        id: string;
-        firstName: string;
-        lastName: string;
-      }>;
-    };
-    trialStartDate: string;
-    trialEndDate: string;
-    startDate: string;
-    endDate: string;
-    state: string;
-    plan: {
-      code: string;
-      name: string;
-    };
-    priceList: {
-      code: string;
-      name: string;
-    };
-    tenant: {
-      id: string;
-      code: string;
-      name: string;
-      account: {
-        id: string;
-        name: string;
-        billingDay: number;
-      };
-    };
-  };
-  errors?: string[];
-}
-
-interface QueryResponse {
-  data?: {
-    subscriptionCreate: SubscriptionResponse;
-  };
-  errors?: Array<{ message: string }>;
 }
 
 const query = `mutation subscriptionCreate ($attributes: SubscriptionAttributes!) {
@@ -160,20 +72,20 @@ const query = `mutation subscriptionCreate ($attributes: SubscriptionAttributes!
 }`;
 
 /**
- * Create a new subscription for a tenant
- * @param {string} priceListCode The code for the plan to subscribe to
- * @param {SubscriptionOptions} options
- * @returns {Promise<SubscriptionResponse['subscription']>} The subscription object
+ * Create a subscription
+ * @param {string} priceListCode The unique code that represents the price list
+ * @param {SubscriptionOptions} [options={}] Additional options for subscription creation
+ * @returns {Promise<NonNullable<NonNullable<Mutation['subscriptionCreate']>['subscription']>>} The created subscription
  */
 export default async function subscriptionCreate(
   this: Bunny,
   priceListCode: string,
   options: SubscriptionOptions = {}
-): Promise<SubscriptionResponse['subscription']> {
-  const variables: { attributes: SubscriptionAttributes } = {
+): Promise<NonNullable<NonNullable<Mutation['subscriptionCreate']>['subscription']>> {
+  const variables: { attributes: Record<string, any> } = {
     attributes: {
       priceListCode,
-      trial: options.trial ?? false,
+      trial: options.trial || false,
       evergreen: options.evergreen ?? true,
     },
   };
@@ -181,52 +93,65 @@ export default async function subscriptionCreate(
   if (options.accountId) {
     variables.attributes.accountId = options.accountId;
   } else {
+    const billingContact: Record<string, string | undefined> = {
+      firstName: options.firstName?.toString(),
+      lastName: options.lastName?.toString(),
+      email: options.email?.toString(),
+      phone: options.phone?.toString(),
+      mobile: options.mobile?.toString(),
+      salutation: options.salutation?.toString(),
+      title: options.title?.toString(),
+      mailingStreet: options.mailingStreet?.toString(),
+      mailingCity: options.mailingCity?.toString(),
+      mailingZip: options.mailingZip?.toString(),
+      mailingState: options.mailingState?.toString(),
+      mailingCountry: options.mailingCountry?.toString(),
+    };
+
+    // Only include non-empty billing contact
+    const filteredBillingContact = Object.fromEntries(
+      Object.entries(billingContact).filter(([_, value]) => value !== undefined)
+    );
+
     variables.attributes.account = {
-      name: options.accountName,
-      ownerUserId: options.ownerUserId,
-      phone: options.phone,
-      fax: options.fax,
-      website: options.website,
-      billingStreet: options.billingStreet,
-      billingCity: options.billingCity,
-      billingZip: options.billingZip,
-      billingState: options.billingState,
-      billingCountry: options.billingCountry,
-      billingContact: {
-        firstName: options.firstName,
-        lastName: options.lastName,
-        email: options.email,
-        phone: options.phone,
-        mobile: options.mobile,
-        salutation: options.salutation,
-        title: options.title,
-        mailingStreet: options.mailingStreet,
-        mailingCity: options.mailingCity,
-        mailingZip: options.mailingZip,
-        mailingState: options.mailingState,
-        mailingCountry: options.mailingCountry,
-      },
+      name: options.accountName?.toString(),
+      ownerUserId: options.ownerUserId?.toString(),
+      phone: options.phone?.toString(),
+      fax: options.fax?.toString(),
+      website: options.website?.toString(),
+      billingStreet: options.billingStreet?.toString(),
+      billingCity: options.billingCity?.toString(),
+      billingZip: options.billingZip?.toString(),
+      billingState: options.billingState?.toString(),
+      billingCountry: options.billingCountry?.toString(),
+      ...(Object.keys(filteredBillingContact).length > 0 && { billingContact: filteredBillingContact }),
     };
   }
 
   if (options.tenantCode) {
     variables.attributes.tenant = {
-      code: options.tenantCode,
-      name: options.tenantName,
+      code: options.tenantCode.toString(),
+      name: options.tenantName?.toString(),
     };
   }
 
-  const res: QueryResponse = await this.query(query, variables);
+  const res = await this.query<{
+    subscriptionCreate: NonNullable<Mutation['subscriptionCreate']>
+  }>(query, variables);
 
   const subscriptionCreate = res?.data?.subscriptionCreate;
 
   if (res?.errors) {
-    throw new Error(res.errors.map((e) => e.message).join());
+    throw new Error(Array.isArray(res.errors) ? res.errors.map(e => e.message).join() : res.errors);
   }
 
   if (subscriptionCreate?.errors) {
-    throw new Error(subscriptionCreate.errors.join());
+    throw new Error(Array.isArray(subscriptionCreate.errors) ? subscriptionCreate.errors.join() : subscriptionCreate.errors);
   }
 
-  return subscriptionCreate?.subscription;
+  if (!subscriptionCreate?.subscription) {
+    throw new Error('No subscription returned from subscription creation');
+  }
+
+  return subscriptionCreate.subscription;
 }
