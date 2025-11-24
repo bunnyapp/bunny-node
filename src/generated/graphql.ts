@@ -32,8 +32,6 @@ export type Account = {
   annualRevenue?: Maybe<Scalars['Int']['output']>;
   /** ARR (Annual Recurring Revenue) amount */
   arr?: Maybe<Scalars['Float']['output']>;
-  /** Pcode (a reference code for location data from Avalara) for Avalara AFC */
-  avalaraAfcPcode?: Maybe<Scalars['String']['output']>;
   balances: Array<AccountBalance>;
   /** City for billing */
   billingCity?: Maybe<Scalars['String']['output']>;
@@ -53,6 +51,8 @@ export type Account = {
   billingZip?: Maybe<Scalars['String']['output']>;
   /** Custom unique identifier for the account */
   code?: Maybe<Scalars['String']['output']>;
+  /** Enable consolidated billing for this account */
+  consolidatedBilling: Scalars['Boolean']['output'];
   /** List of contacts for the account */
   contacts?: Maybe<Array<Contact>>;
   /** Datetime the account was created */
@@ -67,10 +67,14 @@ export type Account = {
   deals?: Maybe<Array<Deal>>;
   /** Description of the account */
   description?: Maybe<Scalars['String']['output']>;
+  /** Indicates if dunning is disabled for this account */
+  disableDunning: Scalars['Boolean']['output'];
   /** Send new invoices to draft state */
   draftInvoices: Scalars['Boolean']['output'];
   /** Dun & Bradstreet Number */
   duns?: Maybe<Scalars['String']['output']>;
+  /** Next effective billing date calculated from billing_day */
+  effectiveBillingDate?: Maybe<Scalars['ISO8601Date']['output']>;
   /** Enable sending emails to account contacts */
   emailsEnabled: Scalars['Boolean']['output'];
   /** Number of employees */
@@ -107,6 +111,10 @@ export type Account = {
   name?: Maybe<Scalars['String']['output']>;
   /** Payment terms in days */
   netPaymentDays?: Maybe<Scalars['Int']['output']>;
+  /** Use the new quote builder to create quotes and invoices */
+  newQuoteBuilder: Scalars['Boolean']['output'];
+  /** Next renewal date from active evergreen subscriptions */
+  nextRenewal?: Maybe<Scalars['ISO8601Date']['output']>;
   /** Account owner */
   owner?: Maybe<User>;
   /** Account owner */
@@ -114,12 +122,14 @@ export type Account = {
   /** Paying status */
   payingStatus?: Maybe<PayingStatus>;
   /** Payment methods associated with this account */
-  paymentMethods?: Maybe<Array<PaymentMethod>>;
+  paymentMethods?: Maybe<PaymentMethodConnection>;
   /** Primary phone number for the account */
   phone?: Maybe<Scalars['String']['output']>;
   /** Recurring revenues for the account */
   recurringRevenues?: Maybe<Array<RecurringRevenue>>;
   revenueMovements?: Maybe<Array<RevenueMovement>>;
+  /** Total revenue recognized to date */
+  revenueToDate?: Maybe<Scalars['Float']['output']>;
   /** Secondary billing contact IDs */
   secondaryBillingContactIds?: Maybe<Array<Scalars['ID']['output']>>;
   /** Secondary billing contact IDs */
@@ -143,6 +153,8 @@ export type Account = {
   /** Time zone for the account */
   timezone?: Maybe<Scalars['String']['output']>;
   transactions?: Maybe<Array<Transaction>>;
+  /** Upcoming account billing dates based on the current subscrptions */
+  upcomingBillingDates?: Maybe<Array<Scalars['ISO8601Date']['output']>>;
   /** Datetime the account was last updated */
   updatedAt: Scalars['ISO8601DateTime']['output'];
   /** Website of the account */
@@ -153,6 +165,18 @@ export type Account = {
 /** An account record is used to represent a customer or trialist */
 export type AccountInvoicesArgs = {
   filter?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+/** An account record is used to represent a customer or trialist */
+export type AccountPaymentMethodsArgs = {
+  accountId?: InputMaybe<Scalars['ID']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -176,8 +200,6 @@ export type AccountAttributes = {
   accountTypeId?: InputMaybe<Scalars['ID']['input']>;
   /** Annual revenue */
   annualRevenue?: InputMaybe<Scalars['Int']['input']>;
-  /** Pcode (a reference code for location data from Avalara) for Avalara AFC */
-  avalaraAfcPcode?: InputMaybe<Scalars['String']['input']>;
   /** City for billing */
   billingCity?: InputMaybe<Scalars['String']['input']>;
   /** Contact for billing correspondence */
@@ -194,10 +216,14 @@ export type AccountAttributes = {
   billingZip?: InputMaybe<Scalars['String']['input']>;
   /** Custom unique identifier for the account */
   code?: InputMaybe<Scalars['String']['input']>;
+  /** Enable consolidated billing for this account */
+  consolidatedBilling?: InputMaybe<Scalars['Boolean']['input']>;
   /** Primary currency for billing */
   currencyId?: InputMaybe<Scalars['ID']['input']>;
   /** Description of the account */
   description?: InputMaybe<Scalars['String']['input']>;
+  /** Indicates if dunning is disabled for this account */
+  disableDunning?: InputMaybe<Scalars['Boolean']['input']>;
   /** Send new invoices to draft state */
   draftInvoices?: InputMaybe<Scalars['Boolean']['input']>;
   /** Dun & Bradstreet Number */
@@ -226,6 +252,8 @@ export type AccountAttributes = {
   name?: InputMaybe<Scalars['String']['input']>;
   /** Payment terms in days */
   netPaymentDays?: InputMaybe<Scalars['Int']['input']>;
+  /** Use the new quote builder to create quotes and invoices */
+  newQuoteBuilder?: InputMaybe<Scalars['Boolean']['input']>;
   /** Account owner */
   ownerUserId?: InputMaybe<Scalars['ID']['input']>;
   /** Primary phone number for the account */
@@ -322,7 +350,7 @@ export type AccountEdge = {
 /** Autogenerated return type of AccountReset. */
 export type AccountResetPayload = {
   __typename?: 'AccountResetPayload';
-  errors?: Maybe<Scalars['String']['output']>;
+  errors?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 /** Autogenerated return type of AccountSignup. */
@@ -420,12 +448,16 @@ export type ApiClient = {
   clientId?: Maybe<Scalars['String']['output']>;
   /** Only returned on creation of an api client */
   clientSecret?: Maybe<Scalars['String']['output']>;
+  /** Entity ID of the api client */
+  entityId?: Maybe<Scalars['ID']['output']>;
   /** Unique identifier of the api client */
   id: Scalars['ID']['output'];
   /** Name of the api client */
   name?: Maybe<Scalars['String']['output']>;
   /** The ID of the user that created the application */
   ownerId?: Maybe<Scalars['ID']['output']>;
+  /** Lets PKCE be used to generate access tokens */
+  pkceEnabled: Scalars['Boolean']['output'];
   /** Required for authorization_code grant. The callback url of the client. */
   redirectUri?: Maybe<Scalars['String']['output']>;
   /** The scopes that this application can request */
@@ -440,8 +472,12 @@ export type ApiClientAttributes = {
   authorizationCodeEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   /** Lets client credentials grant be used to generate access tokens */
   clientCredentialsEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Entity ID of the api client */
+  entityId?: InputMaybe<Scalars['String']['input']>;
   /** Name of the api client */
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Lets PKCE be used to generate access tokens */
+  pkceEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   /** Required for authorization_code grant. The callback url of the client. */
   redirectUri?: InputMaybe<Scalars['String']['input']>;
   /** The scopes that this application can request */
@@ -565,6 +601,8 @@ export type ApprovalRule = {
   isRampEnabled?: Maybe<Scalars['Boolean']['output']>;
   /** Rule name */
   name?: Maybe<Scalars['String']['output']>;
+  netPaymentDays?: Maybe<Scalars['Int']['output']>;
+  netPaymentDaysEnabled?: Maybe<Scalars['Boolean']['output']>;
   overallQuoteDiscount?: Maybe<Scalars['Int']['output']>;
   overallQuoteDiscountEnabled?: Maybe<Scalars['Boolean']['output']>;
   plan?: Maybe<Plan>;
@@ -594,6 +632,8 @@ export type ApprovalRuleAttributes = {
   isRampEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   /** Name of the approval rule */
   name?: InputMaybe<Scalars['String']['input']>;
+  netPaymentDays?: InputMaybe<Scalars['Int']['input']>;
+  netPaymentDaysEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   overallQuoteDiscount?: InputMaybe<Scalars['Int']['input']>;
   overallQuoteDiscountEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   planId?: InputMaybe<Scalars['ID']['input']>;
@@ -711,6 +751,7 @@ export type Attachment = {
   __typename?: 'Attachment';
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  url: Scalars['String']['output'];
 };
 
 /** The Authorized Object represents the entity for which the authorization was granted */
@@ -816,8 +857,6 @@ export type BillingDetailsAttributes = {
   billingStreet?: InputMaybe<Scalars['String']['input']>;
   /** Zip/PostalCode for billing */
   billingZip?: InputMaybe<Scalars['String']['input']>;
-  /** Name of the account */
-  name?: InputMaybe<Scalars['String']['input']>;
   /** Tax number */
   taxNumber?: InputMaybe<Scalars['String']['input']>;
 };
@@ -927,6 +966,15 @@ export type CampaignUpdatePayload = {
 
 export type Charge = QuoteCharge | SubscriptionCharge;
 
+export type ChargeSettingsImport = {
+  /** The charge code to apply settings to */
+  chargeCode: Scalars['String']['input'];
+  /** Quantity for this charge (defaults to 1) */
+  quantity?: InputMaybe<Scalars['Int']['input']>;
+  /** Start date for this specific charge (if not provided, uses quote start date) */
+  startDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+};
+
 export type ChargeType =
   /** One_time charge */
   | 'ONE_TIME'
@@ -934,6 +982,49 @@ export type ChargeType =
   | 'RECURRING'
   /** Usage charge */
   | 'USAGE';
+
+export type Chat = {
+  __typename?: 'Chat';
+  createdAt: Scalars['ISO8601DateTime']['output'];
+  id: Scalars['ID']['output'];
+  messages: Array<Message>;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['ISO8601DateTime']['output'];
+};
+
+/** Autogenerated return type of ChatAsk. */
+export type ChatAskPayload = {
+  __typename?: 'ChatAskPayload';
+  errors: Array<Scalars['String']['output']>;
+};
+
+/** The connection type for Chat. */
+export type ChatConnection = {
+  __typename?: 'ChatConnection';
+  /** A list of edges. */
+  edges?: Maybe<Array<Maybe<ChatEdge>>>;
+  /** A list of nodes. */
+  nodes?: Maybe<Array<Maybe<Chat>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Autogenerated return type of ChatCreate. */
+export type ChatCreatePayload = {
+  __typename?: 'ChatCreatePayload';
+  chatId?: Maybe<Scalars['String']['output']>;
+  errors: Array<Scalars['String']['output']>;
+};
+
+/** An edge in a connection. */
+export type ChatEdge = {
+  __typename?: 'ChatEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node?: Maybe<Chat>;
+};
 
 /** Autogenerated return type of Checkout. */
 export type CheckoutPayload = {
@@ -1277,6 +1368,8 @@ export type CreditNote = {
   creditedInvoiceId?: Maybe<Scalars['ID']['output']>;
   currencyId: Scalars['ID']['output'];
   description: Scalars['String']['output'];
+  dispute?: Maybe<Dispute>;
+  disputeId?: Maybe<Scalars['ID']['output']>;
   disputeReason?: Maybe<DisputeReason>;
   disputeReasonId?: Maybe<Scalars['ID']['output']>;
   entity: Entity;
@@ -1361,14 +1454,13 @@ export type CreditNoteEdge = {
 export type CreditNoteIssuePayload = {
   __typename?: 'CreditNoteIssuePayload';
   /** The issued credit note */
-  creditNote?: Maybe<Invoice>;
+  creditNote?: Maybe<CreditNote>;
 };
 
 export type CreditNoteItem = {
   __typename?: 'CreditNoteItem';
   amount: Scalars['Float']['output'];
   currencyId: Scalars['String']['output'];
-  discount?: Maybe<Scalars['Float']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   invoiceItem?: Maybe<InvoiceItem>;
   invoiceItemId?: Maybe<Scalars['ID']['output']>;
@@ -1377,7 +1469,6 @@ export type CreditNoteItem = {
   price?: Maybe<Scalars['Float']['output']>;
   priceDecimals: Scalars['Int']['output'];
   priceTiers?: Maybe<Array<FormattedChargePriceTier>>;
-  prorationRate?: Maybe<Scalars['Float']['output']>;
   quantity?: Maybe<Scalars['Int']['output']>;
   subtotal: Scalars['Float']['output'];
   taxAmount?: Maybe<Scalars['Float']['output']>;
@@ -1388,6 +1479,27 @@ export type CreditNoteItem = {
 export type CreditNoteItemAttributes = {
   amount: Scalars['Float']['input'];
   id: Scalars['ID']['input'];
+};
+
+/** The connection type for CreditNoteItem. */
+export type CreditNoteItemConnection = {
+  __typename?: 'CreditNoteItemConnection';
+  /** A list of edges. */
+  edges?: Maybe<Array<Maybe<CreditNoteItemEdge>>>;
+  /** A list of nodes. */
+  nodes?: Maybe<Array<Maybe<CreditNoteItem>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in a connection. */
+export type CreditNoteItemEdge = {
+  __typename?: 'CreditNoteItemEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node?: Maybe<CreditNoteItem>;
 };
 
 export type CreditNoteKind =
@@ -1466,13 +1578,6 @@ export type CurrencyConversionType =
   /** Convert to base currency using conversion rate lookup */
   | 'lookup';
 
-/** Autogenerated return type of CurrencyCreate. */
-export type CurrencyCreatePayload = {
-  __typename?: 'CurrencyCreatePayload';
-  currency: Currency;
-  errors?: Maybe<Scalars['String']['output']>;
-};
-
 /** An edge in a connection. */
 export type CurrencyEdge = {
   __typename?: 'CurrencyEdge';
@@ -1491,9 +1596,11 @@ export type CurrencyUpdatePayload = {
 
 export type CurrentUser = {
   __typename?: 'CurrentUser';
+  account?: Maybe<Account>;
   accountName?: Maybe<Scalars['String']['output']>;
   authObject?: Maybe<AuthObject>;
   authObjectName?: Maybe<Scalars['String']['output']>;
+  delinquentMessage?: Maybe<Scalars['String']['output']>;
   entityId?: Maybe<Scalars['ID']['output']>;
   featureFlags: Array<FeatureFlag>;
   payload?: Maybe<CurrentUserPayload>;
@@ -1796,6 +1903,66 @@ export type DemoDataDeletePayload = {
   errors?: Maybe<Scalars['String']['output']>;
 };
 
+export type Dispute = {
+  __typename?: 'Dispute';
+  account: Account;
+  accountId: Scalars['ID']['output'];
+  amount: Scalars['Float']['output'];
+  closedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  createdAt: Scalars['ISO8601DateTime']['output'];
+  currency: Currency;
+  currencyId: Scalars['String']['output'];
+  entity: Entity;
+  entityId: Scalars['ID']['output'];
+  feeAmount: Scalars['Float']['output'];
+  id: Scalars['ID']['output'];
+  invoices?: Maybe<Array<Invoice>>;
+  payment: Payment;
+  paymentId: Scalars['ID']['output'];
+  processingState: DisputeProcessingState;
+  reason?: Maybe<Scalars['String']['output']>;
+  remoteTransactionId: Scalars['String']['output'];
+  state: DisputeState;
+  subscriptions?: Maybe<Array<Subscription>>;
+  updatedAt: Scalars['ISO8601DateTime']['output'];
+  warrenId: Scalars['ID']['output'];
+};
+
+/** The connection type for Dispute. */
+export type DisputeConnection = {
+  __typename?: 'DisputeConnection';
+  /** A list of edges. */
+  edges?: Maybe<Array<Maybe<DisputeEdge>>>;
+  /** A list of nodes. */
+  nodes?: Maybe<Array<Maybe<Dispute>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** An edge in a connection. */
+export type DisputeEdge = {
+  __typename?: 'DisputeEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node?: Maybe<Dispute>;
+};
+
+export type DisputeInvoiceAction =
+  /** Create a credit note and refund when dispute is lost */
+  | 'CREDIT_NOTE_AND_REFUND'
+  /** Take no action on invoices when dispute is lost */
+  | 'DO_NOTHING'
+  /** Unpay the invoice and create a refund when dispute is lost */
+  | 'UNPAY_AND_REFUND';
+
+export type DisputeProcessingState =
+  /** Dispute processing is closed */
+  | 'CLOSED'
+  /** Dispute processing is open */
+  | 'OPEN';
+
 export type DisputeReason = {
   __typename?: 'DisputeReason';
   description?: Maybe<Scalars['String']['output']>;
@@ -1850,6 +2017,22 @@ export type DisputeReasonUpdatePayload = {
   errors?: Maybe<Array<Scalars['String']['output']>>;
 };
 
+export type DisputeState =
+  /** Dispute has been lost by the merchant */
+  | 'LOST'
+  /** Dispute is open and under review */
+  | 'OPEN'
+  /** Dispute has been won by the merchant */
+  | 'WON';
+
+export type DisputeSubscriptionAction =
+  /** Cancel subscriptions immediately when dispute is lost */
+  | 'CANCEL_IMMEDIATELY'
+  /** Take no action on subscriptions when dispute is lost */
+  | 'DO_NOTHING'
+  /** Disable auto-renewal for subscriptions when dispute is lost */
+  | 'DO_NOT_AUTO_RENEW';
+
 export type Document = {
   __typename?: 'Document';
   date: Scalars['ISO8601DateTime']['output'];
@@ -1857,6 +2040,261 @@ export type Document = {
   id: Scalars['ID']['output'];
   size: Scalars['String']['output'];
   url: Scalars['String']['output'];
+};
+
+export type DocumentTemplate = {
+  __typename?: 'DocumentTemplate';
+  components?: Maybe<Array<DocumentTemplateComponent>>;
+  createdAt: Scalars['ISO8601DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  font?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['ID']['output']>;
+  lineHeight?: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  pageSize: Scalars['String']['output'];
+  updatedAt: Scalars['ISO8601DateTime']['output'];
+};
+
+export type DocumentTemplateAttributes = {
+  components?: InputMaybe<Array<DocumentTemplateComponentAttributes>>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  font?: InputMaybe<Scalars['String']['input']>;
+  lineHeight?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  pageSize?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type DocumentTemplateComponent = {
+  __typename?: 'DocumentTemplateComponent';
+  /** The alignment of the component */
+  alignment?: Maybe<Scalars['String']['output']>;
+  /** The background of the component */
+  background?: Maybe<Scalars['String']['output']>;
+  /** The color of the component */
+  color?: Maybe<Scalars['String']['output']>;
+  /** The content of the component */
+  content?: Maybe<Scalars['String']['output']>;
+  /** The created at timestamp */
+  createdAt: Scalars['ISO8601DateTime']['output'];
+  /** The ID of the template that the component belongs to */
+  documentTemplateId?: Maybe<Scalars['ID']['output']>;
+  /** The font of the component */
+  font?: Maybe<Scalars['String']['output']>;
+  /** The font size of the component */
+  fontSize?: Maybe<Scalars['String']['output']>;
+  /** The font weight of the component */
+  fontWeight?: Maybe<Scalars['String']['output']>;
+  /** The height of the component */
+  height?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['ID']['output']>;
+  /** The image scale of the component */
+  imageScale?: Maybe<Scalars['String']['output']>;
+  /** The signed_id for an image attachment */
+  imageSignedId?: Maybe<Scalars['String']['output']>;
+  /** The url for an image attachment */
+  imageUrl?: Maybe<Scalars['String']['output']>;
+  /** The kind of the component */
+  kind?: Maybe<DocumentTemplateComponentKind>;
+  /** The line spacing of the component */
+  lineSpacing?: Maybe<Scalars['String']['output']>;
+  /** The margin bottom of the component */
+  marginBottom?: Maybe<Scalars['Int']['output']>;
+  /** The margin left of the component */
+  marginLeft?: Maybe<Scalars['Int']['output']>;
+  /** The margin right of the component */
+  marginRight?: Maybe<Scalars['Int']['output']>;
+  /** The margin top of the component */
+  marginTop?: Maybe<Scalars['Int']['output']>;
+  /** The padding bottom of the component */
+  paddingBottom?: Maybe<Scalars['Int']['output']>;
+  /** The padding left of the component */
+  paddingLeft?: Maybe<Scalars['Int']['output']>;
+  /** The padding right of the component */
+  paddingRight?: Maybe<Scalars['Int']['output']>;
+  /** The padding top of the component */
+  paddingTop?: Maybe<Scalars['Int']['output']>;
+  /** The position of the component in the template */
+  position?: Maybe<Scalars['Int']['output']>;
+  /** Number of pages to skip before header is shown */
+  skipPages?: Maybe<Scalars['Boolean']['output']>;
+  /** Whether to use two columns */
+  twoColumns?: Maybe<Scalars['Boolean']['output']>;
+  /** The updated at timestamp */
+  updatedAt: Scalars['ISO8601DateTime']['output'];
+  /** The width of the component */
+  width?: Maybe<Scalars['String']['output']>;
+};
+
+export type DocumentTemplateComponentAttributes = {
+  /** The alignment of the component */
+  alignment?: InputMaybe<Scalars['String']['input']>;
+  /** The background of the component */
+  background?: InputMaybe<Scalars['String']['input']>;
+  /** The color of the component */
+  color?: InputMaybe<Scalars['String']['input']>;
+  /** The content of the component */
+  content?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the template that the component belongs to */
+  documentTemplateId?: InputMaybe<Scalars['ID']['input']>;
+  /** The font of the component */
+  font?: InputMaybe<Scalars['String']['input']>;
+  /** The font size of the component */
+  fontSize?: InputMaybe<Scalars['String']['input']>;
+  /** The font weight of the component */
+  fontWeight?: InputMaybe<Scalars['String']['input']>;
+  /** The height of the component */
+  height?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the component */
+  id?: InputMaybe<Scalars['ID']['input']>;
+  /** The image scale of the component */
+  imageScale?: InputMaybe<Scalars['String']['input']>;
+  /** The signed_id for an image attachment */
+  imageSignedId?: InputMaybe<Scalars['String']['input']>;
+  /** The kind of the component */
+  kind: DocumentTemplateComponentKind;
+  /** The line spacing of the component */
+  lineSpacing?: InputMaybe<Scalars['String']['input']>;
+  /** The margin bottom of the component */
+  marginBottom?: InputMaybe<Scalars['Int']['input']>;
+  /** The margin left of the component */
+  marginLeft?: InputMaybe<Scalars['Int']['input']>;
+  /** The margin right of the component */
+  marginRight?: InputMaybe<Scalars['Int']['input']>;
+  /** The margin top of the component */
+  marginTop?: InputMaybe<Scalars['Int']['input']>;
+  /** The padding bottom of the component */
+  paddingBottom?: InputMaybe<Scalars['Int']['input']>;
+  /** The padding left of the component */
+  paddingLeft?: InputMaybe<Scalars['Int']['input']>;
+  /** The padding right of the component */
+  paddingRight?: InputMaybe<Scalars['Int']['input']>;
+  /** The padding top of the component */
+  paddingTop?: InputMaybe<Scalars['Int']['input']>;
+  /** The position of the component in the template */
+  position?: InputMaybe<Scalars['Int']['input']>;
+  /** Number of pages to skip before header is shown */
+  skipPages?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Whether to use two columns */
+  twoColumns?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The width of the component */
+  width?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** The connection type for DocumentTemplateComponent. */
+export type DocumentTemplateComponentConnection = {
+  __typename?: 'DocumentTemplateComponentConnection';
+  /** A list of edges. */
+  edges?: Maybe<Array<Maybe<DocumentTemplateComponentEdge>>>;
+  /** A list of nodes. */
+  nodes?: Maybe<Array<Maybe<DocumentTemplateComponent>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Autogenerated return type of DocumentTemplateComponentCreate. */
+export type DocumentTemplateComponentCreatePayload = {
+  __typename?: 'DocumentTemplateComponentCreatePayload';
+  documentTemplateComponent?: Maybe<DocumentTemplateComponent>;
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+/** Autogenerated return type of DocumentTemplateComponentDelete. */
+export type DocumentTemplateComponentDeletePayload = {
+  __typename?: 'DocumentTemplateComponentDeletePayload';
+  documentTemplateComponent?: Maybe<DocumentTemplateComponent>;
+  errors?: Maybe<Scalars['String']['output']>;
+};
+
+/** An edge in a connection. */
+export type DocumentTemplateComponentEdge = {
+  __typename?: 'DocumentTemplateComponentEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node?: Maybe<DocumentTemplateComponent>;
+};
+
+export type DocumentTemplateComponentKind =
+  /** Account */
+  | 'ACCOUNT'
+  /** Entity */
+  | 'ENTITY'
+  /** Footer */
+  | 'FOOTER'
+  /** Header */
+  | 'HEADER'
+  /** Heading */
+  | 'HEADING'
+  /** Image */
+  | 'IMAGE'
+  /** Pagebreak */
+  | 'PAGEBREAK'
+  /** Paragraph */
+  | 'PARAGRAPH'
+  /** Quote */
+  | 'QUOTE'
+  /** Separator */
+  | 'SEPARATOR'
+  /** Signatures */
+  | 'SIGNATURES'
+  /** Spacer */
+  | 'SPACER';
+
+/** Autogenerated return type of DocumentTemplateComponentUpdate. */
+export type DocumentTemplateComponentUpdatePayload = {
+  __typename?: 'DocumentTemplateComponentUpdatePayload';
+  documentTemplateComponent?: Maybe<DocumentTemplateComponent>;
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+/** The connection type for DocumentTemplate. */
+export type DocumentTemplateConnection = {
+  __typename?: 'DocumentTemplateConnection';
+  /** A list of edges. */
+  edges?: Maybe<Array<Maybe<DocumentTemplateEdge>>>;
+  /** A list of nodes. */
+  nodes?: Maybe<Array<Maybe<DocumentTemplate>>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+/** Autogenerated return type of DocumentTemplateCreate. */
+export type DocumentTemplateCreatePayload = {
+  __typename?: 'DocumentTemplateCreatePayload';
+  documentTemplate?: Maybe<DocumentTemplate>;
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+/** Autogenerated return type of DocumentTemplateDelete. */
+export type DocumentTemplateDeletePayload = {
+  __typename?: 'DocumentTemplateDeletePayload';
+  documentTemplate?: Maybe<DocumentTemplate>;
+  errors?: Maybe<Scalars['String']['output']>;
+};
+
+/** An edge in a connection. */
+export type DocumentTemplateEdge = {
+  __typename?: 'DocumentTemplateEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node?: Maybe<DocumentTemplate>;
+};
+
+export type DocumentTemplatePreview = {
+  __typename?: 'DocumentTemplatePreview';
+  html?: Maybe<Scalars['String']['output']>;
+  id?: Maybe<Scalars['ID']['output']>;
+  name?: Maybe<Scalars['String']['output']>;
+};
+
+/** Autogenerated return type of DocumentTemplateUpdate. */
+export type DocumentTemplateUpdatePayload = {
+  __typename?: 'DocumentTemplateUpdatePayload';
+  documentTemplate?: Maybe<DocumentTemplate>;
+  errors?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type DynamicComponent = {
@@ -2012,6 +2450,10 @@ export type Entity = {
   createdAt: Scalars['ISO8601DateTime']['output'];
   /** Email address for customer service */
   customerServiceEmail?: Maybe<Scalars['String']['output']>;
+  /** Action to take over invoices when a dispute is lost */
+  disputeInvoiceAction: DisputeInvoiceAction;
+  /** Action to take over subscriptions when a dispute is lost */
+  disputeSubscriptionAction: DisputeSubscriptionAction;
   /** The name that will appear as sender in the inbox */
   emailSenderName?: Maybe<Scalars['String']['output']>;
   /** Email template */
@@ -2020,6 +2462,8 @@ export type Entity = {
   fax?: Maybe<Scalars['String']['output']>;
   /** The first month of the fiscal year (0-11) */
   fiscalYearStartMonth?: Maybe<Scalars['Int']['output']>;
+  /** Hide $0 charges from customer-facing quotes */
+  hideZeroQuoteCharges?: Maybe<Scalars['Boolean']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   /** Prefix value for all invoice numbers. e.g. INV */
   invoiceNumberPrefix?: Maybe<Scalars['String']['output']>;
@@ -2081,6 +2525,10 @@ export type EntityAttributes = {
   brandColor?: InputMaybe<Scalars['String']['input']>;
   /** Email address for customer service */
   customerServiceEmail?: InputMaybe<Scalars['String']['input']>;
+  /** Action to over an invoice when a dispute is lost */
+  disputeInvoiceAction?: InputMaybe<DisputeInvoiceAction>;
+  /** Action to take over a subscription  when dispute is lost */
+  disputeSubscriptionAction?: InputMaybe<DisputeSubscriptionAction>;
   /** The name that will appear as sender in the inbox */
   emailSenderName?: InputMaybe<Scalars['String']['input']>;
   /** Email template */
@@ -2089,6 +2537,8 @@ export type EntityAttributes = {
   fax?: InputMaybe<Scalars['String']['input']>;
   /** The first month of the fiscal year (0-11) */
   fiscalYearStartMonth?: InputMaybe<Scalars['Int']['input']>;
+  /** Hide $0 charges from customer-facing quotes */
+  hideZeroQuoteCharges?: InputMaybe<Scalars['Boolean']['input']>;
   /** Prefix value for all invoice numbers. e.g. INV */
   invoiceNumberPrefix?: InputMaybe<Scalars['String']['input']>;
   /** Number to start invoice numbers from */
@@ -2172,6 +2622,12 @@ export type EntityEdge = {
   node?: Maybe<Entity>;
 };
 
+/** Autogenerated return type of EntityTemplateEmailTest. */
+export type EntityTemplateEmailTestPayload = {
+  __typename?: 'EntityTemplateEmailTestPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+};
+
 /** Autogenerated return type of EntityUpdate. */
 export type EntityUpdatePayload = {
   __typename?: 'EntityUpdatePayload';
@@ -2196,8 +2652,12 @@ export type Event = {
   longDescription: Scalars['String']['output'];
   objectType?: Maybe<Scalars['String']['output']>;
   payload: Scalars['JSON']['output'];
+  queryName?: Maybe<Scalars['String']['output']>;
+  queryType?: Maybe<Scalars['String']['output']>;
   severity: Scalars['String']['output'];
   shortDescription: Scalars['String']['output'];
+  shortForm: Scalars['String']['output'];
+  target?: Maybe<Scalars['String']['output']>;
   timeAgo: Scalars['String']['output'];
   uuid: Scalars['String']['output'];
 };
@@ -2245,7 +2705,6 @@ export type EventEdge = {
 
 export type Feature = {
   __typename?: 'Feature';
-  chargeType?: Maybe<ChargeType>;
   code?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['ISO8601DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -2320,11 +2779,6 @@ export type FeatureFlag = {
   quantity?: Maybe<Scalars['Int']['output']>;
 };
 
-export type FeatureFlagAttributes = {
-  code?: InputMaybe<Scalars['String']['input']>;
-  quantity?: InputMaybe<Scalars['Int']['input']>;
-};
-
 export type FeatureKind =
   /** True or false */
   | 'BOOLEAN'
@@ -2350,6 +2804,7 @@ export type FeatureUsage = {
   feature?: Maybe<Feature>;
   featureId?: Maybe<Scalars['ID']['output']>;
   id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
   plan?: Maybe<Plan>;
   product?: Maybe<Product>;
   quantity: Scalars['Float']['output'];
@@ -2365,6 +2820,8 @@ export type FeatureUsageAttributes = {
   accountId?: InputMaybe<Scalars['ID']['input']>;
   featureCode?: InputMaybe<Scalars['String']['input']>;
   featureId?: InputMaybe<Scalars['ID']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  overrideUsageAtLimit?: InputMaybe<Scalars['Boolean']['input']>;
   quantity?: InputMaybe<Scalars['Float']['input']>;
   subscriptionChargeId?: InputMaybe<Scalars['ID']['input']>;
   subscriptionId?: InputMaybe<Scalars['ID']['input']>;
@@ -2500,8 +2957,6 @@ export type FieldValue = {
 /** The financial account record used for accounting */
 export type FinancialAccount = {
   __typename?: 'FinancialAccount';
-  /** The account the financial account belongs to */
-  accountId?: Maybe<Scalars['ID']['output']>;
   /** The account number of the financial account */
   accountNumber?: Maybe<Scalars['String']['output']>;
   /** The type of the financial account */
@@ -2608,8 +3063,12 @@ export type FinancialAccountEdge = {
 };
 
 export type FinancialAccountType =
+  /** Accounts payable */
+  | 'accounts_payable'
   /** Accounts receivable */
   | 'accounts_receivable'
+  /** Bad debt */
+  | 'bad_debt'
   /** Banking fees */
   | 'banking_fees'
   /** Conversion gain */
@@ -2618,6 +3077,8 @@ export type FinancialAccountType =
   | 'conversion_loss'
   /** CPCA */
   | 'cpca'
+  /** Customer advances */
+  | 'customer_advances'
   /** Deferred revenue */
   | 'deferred_revenue'
   /** Earned revenue */
@@ -2817,14 +3278,15 @@ export type FormattedQuote = {
   endDate?: Maybe<Scalars['ISO8601Date']['output']>;
   evergreen: Scalars['Boolean']['output'];
   expiresAt?: Maybe<Scalars['ISO8601Date']['output']>;
+  files?: Maybe<Array<Document>>;
   formattedLines: Array<QuoteLine>;
   html?: Maybe<Scalars['String']['output']>;
   netPaymentDays?: Maybe<Scalars['Int']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   number?: Maybe<Scalars['String']['output']>;
-  object: Quote;
   payableId?: Maybe<Scalars['ID']['output']>;
   poNumberRequired?: Maybe<Scalars['Boolean']['output']>;
+  quote: Quote;
   salesContactEmail?: Maybe<Scalars['String']['output']>;
   sharedAt?: Maybe<Scalars['ISO8601Date']['output']>;
   startDate?: Maybe<Scalars['ISO8601Date']['output']>;
@@ -3034,6 +3496,8 @@ export type Invoice = {
   amount: Scalars['Float']['output'];
   amountDue?: Maybe<Scalars['Float']['output']>;
   amountPaid?: Maybe<Scalars['Float']['output']>;
+  baseCurrencyId: Scalars['ID']['output'];
+  baseCurrencyTotal: Scalars['Float']['output'];
   couponApplied: Scalars['Boolean']['output'];
   createdAt: Scalars['ISO8601DateTime']['output'];
   creditItem?: Maybe<InvoiceItem>;
@@ -3042,13 +3506,22 @@ export type Invoice = {
   currencyId: Scalars['ID']['output'];
   description: Scalars['String']['output'];
   dueAt?: Maybe<Scalars['ISO8601Date']['output']>;
+  entity: Entity;
+  hasPaymentMethod?: Maybe<Scalars['Boolean']['output']>;
   /** IDs are null when object is previewed */
   id?: Maybe<Scalars['ID']['output']>;
+  /** Internal notes that are not included in the invoice PDF, only visible in the App */
+  internalNotes?: Maybe<Scalars['String']['output']>;
   invoiceItems?: Maybe<Array<InvoiceItem>>;
   isLegacy: Scalars['Boolean']['output'];
   issuedAt?: Maybe<Scalars['ISO8601Date']['output']>;
   kind: Scalars['String']['output'];
+  /** The invoices that were merged into this invoice */
+  mergedInvoices?: Maybe<Array<Invoice>>;
+  /** The invoice this invoice was merged into */
+  mergedToInvoice?: Maybe<Invoice>;
   netPaymentDays: Scalars['Int']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
   /** Invoice number. Blank when invoice is being prepared */
   number?: Maybe<Scalars['String']['output']>;
   operations: Array<Scalars['String']['output']>;
@@ -3056,16 +3529,21 @@ export type Invoice = {
   payableId?: Maybe<Scalars['ID']['output']>;
   /** Payments applied to this invoice */
   paymentApplications?: Maybe<Array<PaymentApplication>>;
+  paymentFailedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  paymentFailureReason?: Maybe<Scalars['String']['output']>;
   payments?: Maybe<PaymentConnection>;
   poNumber?: Maybe<Scalars['String']['output']>;
   /** URL to the invoice within the customer portal */
   portalUrl: Scalars['String']['output'];
   quote?: Maybe<Quote>;
   quoteId?: Maybe<Scalars['ID']['output']>;
+  /** Email address where the invoice was last sent to */
+  sendInvoiceTo?: Maybe<Scalars['String']['output']>;
   smallUnitAmountDue?: Maybe<Scalars['Int']['output']>;
   state: InvoiceState;
   subtotal: Scalars['Float']['output'];
   taxAmount: Scalars['Float']['output'];
+  taxRate?: Maybe<Scalars['Float']['output']>;
   transactionRecord: Transaction;
   updatedAt: Scalars['ISO8601DateTime']['output'];
   /** URL to the invoice within the Bunny app */
@@ -3088,6 +3566,8 @@ export type InvoiceAddCreditPayload = {
 };
 
 export type InvoiceAttributes = {
+  internalNotes?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
   poNumber?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -3116,6 +3596,13 @@ export type InvoiceDeleteCreditPayload = {
   invoiceItem?: Maybe<InvoiceItem>;
 };
 
+/** Autogenerated return type of InvoiceDequeue. */
+export type InvoiceDequeuePayload = {
+  __typename?: 'InvoiceDequeuePayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  invoice: Invoice;
+};
+
 /** An edge in a connection. */
 export type InvoiceEdge = {
   __typename?: 'InvoiceEdge';
@@ -3137,29 +3624,32 @@ export type InvoiceItem = {
   amount: Scalars['Float']['output'];
   charge: Charge;
   chargeType?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
   couponId?: Maybe<Scalars['ID']['output']>;
   creditNoteItem?: Maybe<CreditNoteItem>;
   creditedItem?: Maybe<InvoiceItem>;
   currencyId: Scalars['String']['output'];
   discount?: Maybe<Scalars['Float']['output']>;
+  endDate?: Maybe<Scalars['ISO8601Date']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   invoice: Invoice;
   invoiceId: Scalars['ID']['output'];
   isCoupon: Scalars['Boolean']['output'];
   isCredit: Scalars['Boolean']['output'];
-  isRamp: Scalars['Boolean']['output'];
   kind?: Maybe<QuoteChangeKind>;
   lineText?: Maybe<Scalars['String']['output']>;
   position?: Maybe<Scalars['Int']['output']>;
   price?: Maybe<Scalars['Float']['output']>;
   priceDecimals: Scalars['Int']['output'];
+  priceTier?: Maybe<FormattedChargePriceTier>;
   priceTiers?: Maybe<Array<FormattedChargePriceTier>>;
   prorationRate?: Maybe<Scalars['Float']['output']>;
   quantity?: Maybe<Scalars['Int']['output']>;
-  showProductNameOnLineItem: Scalars['Boolean']['output'];
+  startDate?: Maybe<Scalars['ISO8601Date']['output']>;
   subtotal: Scalars['Float']['output'];
   taxAmount?: Maybe<Scalars['Float']['output']>;
   taxCode?: Maybe<Scalars['String']['output']>;
+  taxRate?: Maybe<Scalars['Float']['output']>;
   vatCode?: Maybe<Scalars['String']['output']>;
 };
 
@@ -3184,6 +3674,20 @@ export type InvoiceItemEdge = {
   node?: Maybe<InvoiceItem>;
 };
 
+/** Autogenerated return type of InvoiceMerge. */
+export type InvoiceMergePayload = {
+  __typename?: 'InvoiceMergePayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  invoice: Invoice;
+};
+
+/** Autogenerated return type of InvoiceMergeUndo. */
+export type InvoiceMergeUndoPayload = {
+  __typename?: 'InvoiceMergeUndoPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  sourceInvoices: Array<Invoice>;
+};
+
 export type InvoiceMessage = {
   __typename?: 'InvoiceMessage';
   ids?: Maybe<Array<Scalars['ID']['output']>>;
@@ -3193,7 +3697,7 @@ export type InvoiceMessage = {
 /** Autogenerated return type of InvoiceRefund. */
 export type InvoiceRefundPayload = {
   __typename?: 'InvoiceRefundPayload';
-  creditNote?: Maybe<Invoice>;
+  creditNote?: Maybe<CreditNote>;
   errors?: Maybe<Array<Scalars['String']['output']>>;
 };
 
@@ -3233,12 +3737,16 @@ export type InvoiceSendEmailPayload = {
 };
 
 export type InvoiceState =
+  /** Consolidated invoice */
+  | 'CONSOLIDATED'
   /** Draft invoice */
   | 'DRAFT'
   /** Due invoice */
   | 'DUE'
   /** Failed invoice */
   | 'FAILED'
+  /** Merged invoice */
+  | 'MERGED'
   /** Not_due invoice */
   | 'NOT_DUE'
   /** Paid invoice */
@@ -3247,6 +3755,8 @@ export type InvoiceState =
   | 'PREPARING'
   /** Processing_payment invoice */
   | 'PROCESSING_PAYMENT'
+  /** Queued invoice */
+  | 'QUEUED'
   /** Ready invoice */
   | 'READY'
   /** Unpaid invoice */
@@ -3266,6 +3776,7 @@ export type InvoiceTemplate = {
   includePaymentLink?: Maybe<Scalars['Boolean']['output']>;
   isDefault?: Maybe<Scalars['Boolean']['output']>;
   name?: Maybe<Scalars['String']['output']>;
+  pageSize?: Maybe<Scalars['String']['output']>;
   poNumberRequired?: Maybe<Scalars['Boolean']['output']>;
   taxNumberLabel?: Maybe<Scalars['String']['output']>;
   taxNumberRequired?: Maybe<Scalars['Boolean']['output']>;
@@ -3280,6 +3791,7 @@ export type InvoiceTemplateAttributes = {
   includePaymentLink?: InputMaybe<Scalars['Boolean']['input']>;
   isDefault?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  pageSize?: InputMaybe<Scalars['String']['input']>;
   poNumberRequired?: InputMaybe<Scalars['Boolean']['input']>;
   taxNumberLabel?: InputMaybe<Scalars['String']['input']>;
   taxNumberRequired?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3327,6 +3839,13 @@ export type InvoiceTemplateUpdatePayload = {
   invoiceTemplate?: Maybe<InvoiceTemplate>;
 };
 
+/** Autogenerated return type of InvoiceUpdateComment. */
+export type InvoiceUpdateCommentPayload = {
+  __typename?: 'InvoiceUpdateCommentPayload';
+  errors: Array<Scalars['String']['output']>;
+  invoiceItem?: Maybe<InvoiceItem>;
+};
+
 /** Autogenerated return type of InvoiceUpdateCredit. */
 export type InvoiceUpdateCreditPayload = {
   __typename?: 'InvoiceUpdateCreditPayload';
@@ -3343,6 +3862,13 @@ export type InvoiceUpdateCreditsPayload = {
   __typename?: 'InvoiceUpdateCreditsPayload';
   errors: Array<Scalars['String']['output']>;
   invoiceItems?: Maybe<Array<InvoiceItem>>;
+};
+
+/** Autogenerated return type of InvoiceUpdateNotes. */
+export type InvoiceUpdateNotesPayload = {
+  __typename?: 'InvoiceUpdateNotesPayload';
+  errors: Array<Scalars['String']['output']>;
+  invoice?: Maybe<Invoice>;
 };
 
 /** Autogenerated return type of InvoiceUpdate. */
@@ -3490,6 +4016,31 @@ export type JournalEntryLineEdge = {
   cursor: Scalars['String']['output'];
   /** The item at the end of the edge. */
   node?: Maybe<JournalEntryLine>;
+};
+
+/** Launchpad metrics for revenue tracking */
+export type Launchpad = {
+  __typename?: 'Launchpad';
+  /** Actual cash collected in the current month */
+  collectedCashThisMonth: Scalars['Float']['output'];
+  /** Base currency ID from the specified entity */
+  currencyId?: Maybe<Scalars['String']['output']>;
+  /** The entity used for scoping dashboard data */
+  entity?: Maybe<Entity>;
+  /** The group ID used for filtering dashboard data (provided or default) */
+  groupId?: Maybe<Scalars['ID']['output']>;
+  /** Total revenue from invoices that are past due */
+  pastDueRevenue: Scalars['Float']['output'];
+  /** Total revenue in payments that failed processing */
+  revenueInFailedPayments: Scalars['Float']['output'];
+  /** Total revenue amount in quotes with shared status */
+  sharedQuotes: Scalars['Float']['output'];
+  /** Target cash collection from billing forecasts for current month */
+  targetCashThisMonth: Scalars['Float']['output'];
+  /** Total uncollected cash for the current month */
+  uncollectedCashThisMonth: Scalars['Float']['output'];
+  /** Total revenue from subscriptions nearing renewal */
+  upcomingRenewals: Scalars['Float']['output'];
 };
 
 /** Leads are used to track potential new opportunities and can be converted to accounts */
@@ -3842,6 +4393,19 @@ export type Macro = {
   name: Scalars['String']['output'];
 };
 
+export type Message = {
+  __typename?: 'Message';
+  attachments?: Maybe<Array<Attachment>>;
+  chat: Chat;
+  chatId: Scalars['ID']['output'];
+  content?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['ISO8601DateTime']['output'];
+  id: Scalars['ID']['output'];
+  role: Scalars['String']['output'];
+  updatedAt: Scalars['ISO8601DateTime']['output'];
+  user: User;
+};
+
 export type Method = {
   __typename?: 'Method';
   id: Scalars['ID']['output'];
@@ -3923,6 +4487,10 @@ export type Mutation = {
   campaignDelete?: Maybe<CampaignDeletePayload>;
   /** Update a campaign [REQUIRED_SCOPES:standard:write] */
   campaignUpdate?: Maybe<CampaignUpdatePayload>;
+  /** Ask a question to the chat [REQUIRED_SCOPES:standard:write] */
+  chatAsk?: Maybe<ChatAskPayload>;
+  /** Create a chat [REQUIRED_SCOPES:standard:write] */
+  chatCreate?: Maybe<ChatCreatePayload>;
   /** Pay a Quote or an Invoice [REQUIRED_SCOPES:standard:write] */
   checkout?: Maybe<CheckoutPayload>;
   /** Update company details [REQUIRED_SCOPES:admin:write] */
@@ -3951,8 +4519,6 @@ export type Mutation = {
   creditNoteUpdate?: Maybe<CreditNoteUpdatePayload>;
   /** Update a credit note taxes [REQUIRED_SCOPES:billing:write] */
   creditNoteUpdateTaxes?: Maybe<CreditNoteUpdateTaxesPayload>;
-  /** Create a currency [REQUIRED_SCOPES:billing:write] */
-  currencyCreate?: Maybe<CurrencyCreatePayload>;
   /** Update a currency [REQUIRED_SCOPES:billing:write] */
   currencyUpdate?: Maybe<CurrencyUpdatePayload>;
   /** Update the profile of the current user [REQUIRED_SCOPES:standard:write] */
@@ -3979,6 +4545,18 @@ export type Mutation = {
   disputeReasonDelete?: Maybe<DisputeReasonDeletePayload>;
   /** Update a dispute reason [REQUIRED_SCOPES:billing:write] */
   disputeReasonUpdate?: Maybe<DisputeReasonUpdatePayload>;
+  /** Create a document template component [REQUIRED_SCOPES:billing:write] */
+  documentTemplateComponentCreate?: Maybe<DocumentTemplateComponentCreatePayload>;
+  /** Delete a document template component [REQUIRED_SCOPES:billing:write] */
+  documentTemplateComponentDelete?: Maybe<DocumentTemplateComponentDeletePayload>;
+  /** Update a document template component [REQUIRED_SCOPES:billing:write] */
+  documentTemplateComponentUpdate?: Maybe<DocumentTemplateComponentUpdatePayload>;
+  /** Create a document template [REQUIRED_SCOPES:billing:write] */
+  documentTemplateCreate?: Maybe<DocumentTemplateCreatePayload>;
+  /** Delete a document template [REQUIRED_SCOPES:billing:write] */
+  documentTemplateDelete?: Maybe<DocumentTemplateDeletePayload>;
+  /** Update a document template [REQUIRED_SCOPES:billing:write] */
+  documentTemplateUpdate?: Maybe<DocumentTemplateUpdatePayload>;
   /** Reset email branding [REQUIRED_SCOPES:admin:write] */
   emailBrandingReset?: Maybe<EmailBrandingResetPayload>;
   /** Retry sending an email [REQUIRED_SCOPES:standard:write] */
@@ -3989,6 +4567,8 @@ export type Mutation = {
   entityDelete?: Maybe<EntityDeletePayload>;
   /** Create a duplicate of an entity [REQUIRED_SCOPES:admin:write] */
   entityDuplicate?: Maybe<EntityDuplicatePayload>;
+  /** Send the entity email template to the current user. [REQUIRED_SCOPES:admin:write] */
+  entityTemplateEmailTest?: Maybe<EntityTemplateEmailTestPayload>;
   /** Update an entity [REQUIRED_SCOPES:admin:write] */
   entityUpdate?: Maybe<EntityUpdatePayload>;
   /** Replaces a company address with a validated address [REQUIRED_SCOPES:admin:write] */
@@ -4031,8 +4611,14 @@ export type Mutation = {
   invoiceCredit?: Maybe<InvoiceCreditPayload>;
   /** Delete a credit from an invoice [REQUIRED_SCOPES:billing:write] */
   invoiceDeleteCredit?: Maybe<InvoiceDeleteCreditPayload>;
+  /** Dequeue an invoice from consolidation queue for individual processing [REQUIRED_SCOPES:billing:write] */
+  invoiceDequeue?: Maybe<InvoiceDequeuePayload>;
   /** Generate an invoice for the next billing period [REQUIRED_SCOPES:billing:write] */
   invoiceGenerateNextPeriod?: Maybe<InvoiceGenerateNextPeriodPayload>;
+  /** Merge two or more invoices [REQUIRED_SCOPES:billing:write] */
+  invoiceMerge?: Maybe<InvoiceMergePayload>;
+  /** Undo the merge of two or more invoices [REQUIRED_SCOPES:billing:write] */
+  invoiceMergeUndo?: Maybe<InvoiceMergeUndoPayload>;
   /** Refund an invoice [REQUIRED_SCOPES:billing:write] */
   invoiceRefund?: Maybe<InvoiceRefundPayload>;
   /** Regenerate an invoice [REQUIRED_SCOPES:billing:write] */
@@ -4053,10 +4639,14 @@ export type Mutation = {
   invoiceTemplateUpdate?: Maybe<InvoiceTemplateUpdatePayload>;
   /** Update an invoice [REQUIRED_SCOPES:billing:write] */
   invoiceUpdate?: Maybe<InvoiceUpdatePayload>;
+  /** Add, update, or remove a comment on an invoice item [REQUIRED_SCOPES:billing:write] */
+  invoiceUpdateComment?: Maybe<InvoiceUpdateCommentPayload>;
   /** Edit a credit on an invoice [REQUIRED_SCOPES:billing:write] */
   invoiceUpdateCredit?: Maybe<InvoiceUpdateCreditPayload>;
   /** Edit credits on an invoice [REQUIRED_SCOPES:billing:write] */
   invoiceUpdateCredits?: Maybe<InvoiceUpdateCreditsPayload>;
+  /** Add, update, or remove notes from an invoice [REQUIRED_SCOPES:billing:write] */
+  invoiceUpdateNotes?: Maybe<InvoiceUpdateNotesPayload>;
   /** Update an invoice taxes [REQUIRED_SCOPES:billing:write] */
   invoiceUpdateTaxes?: Maybe<InvoiceUpdateTaxesPayload>;
   /** Void an invoice [REQUIRED_SCOPES:billing:write] */
@@ -4171,16 +4761,14 @@ export type Mutation = {
   productImport?: Maybe<ProductImportPayload>;
   /** Update a product [REQUIRED_SCOPES:product:write] */
   productUpdate?: Maybe<ProductUpdatePayload>;
-  /** Trigger a fake provisioning workflow to send a test webhook request [REQUIRED_SCOPES:workflow:write] */
-  provisioningWorkflowTest?: Maybe<ProvisioningWorkflowTestPayload>;
   /** Flag a quote as accepted [REQUIRED_SCOPES:standard:write] */
   quoteAccept?: Maybe<QuoteAcceptPayload>;
   /** Create an account and get a quote amount for a subscription. [REQUIRED_SCOPES:standard:write] */
   quoteAccountSignup?: Maybe<QuoteAccountSignupPayload>;
-  /** Add a coupon to a Quote [REQUIRED_SCOPES:standard:write] */
-  quoteAddCoupon?: Maybe<QuoteAddCouponPayload>;
   /** Convert the quote to a subscription [REQUIRED_SCOPES:admin:write] */
   quoteApplyChanges?: Maybe<QuoteApplyChangesPayload>;
+  /** Apply price adjustments to the quote [REQUIRED_SCOPES:standard:write] */
+  quoteApplyPriceAdjustments?: Maybe<QuoteApplyPriceAdjustmentsPayload>;
   /** Cancel the approval process and remove the pending approval request [REQUIRED_SCOPES:standard:write] */
   quoteApprovalCancel?: Maybe<QuoteApprovalCancelPayload>;
   /** Begin with the approval process [REQUIRED_SCOPES:standard:write] */
@@ -4189,20 +4777,37 @@ export type Mutation = {
   quoteApprove?: Maybe<QuoteApprovePayload>;
   /** Create a quote change [REQUIRED_SCOPES:standard:write] */
   quoteChangeAdd?: Maybe<QuoteChangeCreatePayload>;
+  /** Add a coupon to a Quote [REQUIRED_SCOPES:standard:write] */
+  quoteChangeAddCoupon?: Maybe<QuoteChangeAddCouponPayload>;
+  /** Apply the price adjustments on a quote change [REQUIRED_SCOPES:standard:write] */
+  quoteChangeApplyPriceAdjustment?: Maybe<QuoteChangeApplyPriceAdjustmentPayload>;
   /** Add a price list with its charges and quantities to the quote [REQUIRED_SCOPES:standard:write] */
   quoteChangeCreate?: Maybe<QuoteChangeCreatePayload>;
   /** Add a price list and configure the ramp up of the charges [REQUIRED_SCOPES:standard:write] */
   quoteChangeCreateRampUp?: Maybe<QuoteChangeCreateRampUpPayload>;
   /** Add a price list and configure the ramp up of the charges [REQUIRED_SCOPES:standard:write] */
   quoteChangeCreateRampUpPreview?: Maybe<QuoteChangeCreateRampUpPreviewPayload>;
+  /** Create a quote change for a subscription renewal [REQUIRED_SCOPES:standard:write] */
+  quoteChangeCreateRenew?: Maybe<QuoteChangeCreateRenewPayload>;
   /** Delete a quote change [REQUIRED_SCOPES:standard:write] */
   quoteChangeDelete?: Maybe<QuoteChangeDeletePayload>;
-  /** Create a discount for a quote charge [REQUIRED_SCOPES:standard:write] */
+  /**
+   * Create a discount for a quote charge [REQUIRED_SCOPES:standard:write]
+   * @deprecated This mutation is deprecated. Please use quote_charge_create with discount argument instead.
+   */
   quoteChangeDiscountCreate?: Maybe<QuoteChangeDiscountCreatePayload>;
+  /** Removes a coupon from a quote change [REQUIRED_SCOPES:standard:write] */
+  quoteChangeRemoveCoupon?: Maybe<QuoteChangeRemoveCouponPayload>;
+  /** Revert the price adjustments on a quote change [REQUIRED_SCOPES:standard:write] */
+  quoteChangeRevertPriceAdjustment?: Maybe<QuoteChangeRevertPriceAdjustmentPayload>;
   /** Update a quote change [REQUIRED_SCOPES:standard:write] */
   quoteChangeUpdate?: Maybe<QuoteChangeUpdatePayload>;
   /** Modify the ramp deal configuration [REQUIRED_SCOPES:standard:write] */
   quoteChangeUpdateRampUp?: Maybe<QuoteChangeUpdateRampUpPayload>;
+  /** Create a charge for a quote change [REQUIRED_SCOPES:standard:write] */
+  quoteChargeCreate?: Maybe<QuoteChargeCreatePayload>;
+  /** Delete a quote charge [REQUIRED_SCOPES:standard:write] */
+  quoteChargeDelete?: Maybe<QuoteChargeDeletePayload>;
   /** Add free months to a quote charge [REQUIRED_SCOPES:standard:write] */
   quoteChargeFreeMonthsCreate?: Maybe<QuoteChargeFreeMonthsCreatePayload>;
   /** Modify the quote charge properties [REQUIRED_SCOPES:standard:write] */
@@ -4217,22 +4822,28 @@ export type Mutation = {
   quoteDelete?: Maybe<QuoteDeletePayload>;
   /** Create a duplicate of a quote [REQUIRED_SCOPES:standard:write] */
   quoteDuplicate?: Maybe<QuoteDuplicatePayload>;
-  /**  [REQUIRED_SCOPES:standard:write] */
-  quotePlanPreview: QuotePlanPreview;
   /** Poll for the signing url to check if it is ready [REQUIRED_SCOPES:standard:write] */
   quotePollSigningUrl?: Maybe<QuotePollSigningUrlPayload>;
-  /** DEPRECATED. Please use Quote Checkout instead [REQUIRED_SCOPES:standard:write] */
-  quotePreview: QuotePlanPreview;
   /** Update a quote taxes [REQUIRED_SCOPES:standard:write] */
   quoteRecalculateTaxes?: Maybe<QuoteRecalculateTaxesPayload>;
   /** Reject a quote [REQUIRED_SCOPES:standard:write] */
   quoteReject?: Maybe<QuoteRejectPayload>;
-  /** Removes coupons from a quote [REQUIRED_SCOPES:standard:write] */
-  quoteRemoveCoupons?: Maybe<QuoteRemoveCouponsPayload>;
   /** Send the quote by email to the quotes contact [REQUIRED_SCOPES:standard:write] */
   quoteSendEmail?: Maybe<QuoteSendEmailPayload>;
+  /** Add a signature to a quote [REQUIRED_SCOPES:standard:write] */
+  quoteSignatureCreate?: Maybe<QuoteSignatureCreatePayload>;
+  /** Send the quote by email to the remaining signers [REQUIRED_SCOPES:standard:write] */
+  quoteSignersSendEmail?: Maybe<QuoteSignersSendEmailPayload>;
   /** Generate a signing url for a quote [REQUIRED_SCOPES:standard:write] */
   quoteSigningUrlCreate?: Maybe<QuoteCreateSignUrlPayload>;
+  /** Quote activating a subscription [REQUIRED_SCOPES:standard:write] */
+  quoteSubscriptionActivate?: Maybe<QuoteSubscriptionActivatePayload>;
+  /** Generate a quote to add an addon to a subscription [REQUIRED_SCOPES:standard:write] */
+  quoteSubscriptionAddon?: Maybe<QuoteSubscriptionAddonPayload>;
+  /** Generate a quote to discount a subscription [REQUIRED_SCOPES:standard:write] */
+  quoteSubscriptionDiscount?: Maybe<QuoteSubscriptionDiscountPayload>;
+  /** Import a subscription from a price list and account data [REQUIRED_SCOPES:product:write] */
+  quoteSubscriptionImport?: Maybe<QuoteSubscriptionImportPayload>;
   /** Generate a quote to reinstate a subscription [REQUIRED_SCOPES:standard:write] */
   quoteSubscriptionReinstate?: Maybe<QuoteSubscriptionReinstatePayload>;
   /** Generate a quote to renew a subscription [REQUIRED_SCOPES:standard:write] */
@@ -4253,16 +4864,20 @@ export type Mutation = {
   roleDelete?: Maybe<RoleDeletePayload>;
   /** Update a role [REQUIRED_SCOPES:security:write] */
   roleUpdate?: Maybe<RoleUpdatePayload>;
-  /** Complete the signup for a Bunny account [REQUIRED_SCOPES:legendary:write] */
+  /** Complete the signup for a Bunny account [REQUIRED_SCOPES:signup:write] */
   signupActivate?: Maybe<SignupActivatePayload>;
-  /** Sign up for a Bunny account [REQUIRED_SCOPES:legendary:write] */
+  /** Sign up for a Bunny account [REQUIRED_SCOPES:signup:write] */
   signupCreate?: Maybe<SignupCreatePayload>;
+  /** Migrate a subscription from Stripe [REQUIRED_SCOPES:standard:write] */
+  stripeSubscriptionMigrate?: Maybe<StripeSubscriptionMigratePayload>;
   /** Cancel an active subscription [REQUIRED_SCOPES:standard:write] */
   subscriptionCancel?: Maybe<SubscriptionCancelPayload>;
   /** Create a paid or trial subscription [REQUIRED_SCOPES:standard:write] */
   subscriptionCreate?: Maybe<SubscriptionCreatePayload>;
-  /** Delete a subscription [REQUIRED_SCOPES:standard:write] */
+  /** Delete a subscription (only in sandbox mode with no issued invoices) [REQUIRED_SCOPES:standard:write] */
   subscriptionDelete?: Maybe<SubscriptionDeletePayload>;
+  /** Quote quantity modifications to a subscription [REQUIRED_SCOPES:standard:write] */
+  subscriptionQuantityUpdate?: Maybe<SubscriptionQuantityUpdatePayload>;
   /** Reinstating an expired or canceled subscription [REQUIRED_SCOPES:standard:write] */
   subscriptionReinstate?: Maybe<SubscriptionReinstatePayload>;
   /** Toggle auto-renew ON or OFF on a subscription [REQUIRED_SCOPES:standard:write] */
@@ -4271,7 +4886,10 @@ export type Mutation = {
   subscriptionTenantUpdate?: Maybe<SubscriptionTenantUpdatePayload>;
   /** Convert an existing trial subscription into a paid subscription [REQUIRED_SCOPES:standard:write] */
   subscriptionTrialConvert?: Maybe<SubscriptionTrialConvertPayload>;
-  /** Preview of a existing trial subscription conversion [REQUIRED_SCOPES:standard:write] */
+  /**
+   * Preview of a existing trial subscription conversion [REQUIRED_SCOPES:standard:write]
+   * @deprecated This mutation is deprecated. Please use quote_subscription_activate instead.
+   */
   subscriptionTrialConvertPreview?: Maybe<SubscriptionTrialConvertPreviewPayload>;
   /** Extend the subscription's trial period [REQUIRED_SCOPES:standard:write] */
   subscriptionTrialExtend?: Maybe<SubscriptionTrialExtendPayload>;
@@ -4285,10 +4903,12 @@ export type Mutation = {
   tenantDelete?: Maybe<TenantDeletePayload>;
   /** Updates the metrics for a tenant [REQUIRED_SCOPES:platform:write] */
   tenantMetricsUpdate?: Maybe<TenantMetricsUpdatePayload>;
-  /** Change the provisioning state to trigger a provisioning workflow [REQUIRED_SCOPES:standard:write] */
-  tenantProvisioningChangeUpdate?: Maybe<TenantProvisioningChangeUpdatePayload>;
   /** Update an tenant [REQUIRED_SCOPES:product:write] */
   tenantUpdate?: Maybe<TenantUpdatePayload>;
+  /** Test an email by sending it to the current user [REQUIRED_SCOPES:admin:write] */
+  testEmail?: Maybe<TestEmailPayload>;
+  /** Send a test webhook payload to the webhook url [REQUIRED_SCOPES:admin:write] */
+  testWebhook?: Maybe<TestWebhookPayload>;
   /** Create a user [REQUIRED_SCOPES:security:write] */
   userCreate?: Maybe<UserCreatePayload>;
   /** Delete a user [REQUIRED_SCOPES:security:write] */
@@ -4301,8 +4921,6 @@ export type Mutation = {
   viewDelete?: Maybe<ViewDeletePayload>;
   /** Update a view [REQUIRED_SCOPES:standard:write] */
   viewUpdate?: Maybe<ViewUpdatePayload>;
-  /**  [REQUIRED_SCOPES:legendary:write] */
-  warrenProvision?: Maybe<WarrenProvisionPayload>;
   /**  [REQUIRED_SCOPES:standard:write] */
   webPushSubscribe?: Maybe<WebPushSubscribePayload>;
   /** Retry sending a webhook event [REQUIRED_SCOPES:workflow:write] */
@@ -4349,7 +4967,6 @@ export type MutationAccountResetArgs = {
 
 export type MutationAccountSignupArgs = {
   accountId: Scalars['ID']['input'];
-  entityId: Scalars['ID']['input'];
   paymentMethodId?: InputMaybe<Scalars['String']['input']>;
   pluginId: Scalars['String']['input'];
   priceListCode: Scalars['String']['input'];
@@ -4448,6 +5065,13 @@ export type MutationCampaignUpdateArgs = {
 };
 
 
+export type MutationChatAskArgs = {
+  appRoute?: InputMaybe<Scalars['String']['input']>;
+  chatId: Scalars['String']['input'];
+  message: Scalars['String']['input'];
+};
+
+
 export type MutationCheckoutArgs = {
   invoiceId?: InputMaybe<Scalars['ID']['input']>;
   payableId?: InputMaybe<Scalars['ID']['input']>;
@@ -4532,11 +5156,6 @@ export type MutationCreditNoteUpdateTaxesArgs = {
 };
 
 
-export type MutationCurrencyCreateArgs = {
-  attributes: CurrencyAttributes;
-};
-
-
 export type MutationCurrencyUpdateArgs = {
   attributes: CurrencyAttributes;
   id: Scalars['ID']['input'];
@@ -4592,6 +5211,38 @@ export type MutationDisputeReasonDeleteArgs = {
 
 export type MutationDisputeReasonUpdateArgs = {
   attributes: DisputeReasonAttributes;
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDocumentTemplateComponentCreateArgs = {
+  attributes: DocumentTemplateComponentAttributes;
+};
+
+
+export type MutationDocumentTemplateComponentDeleteArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDocumentTemplateComponentUpdateArgs = {
+  attributes: DocumentTemplateComponentAttributes;
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDocumentTemplateCreateArgs = {
+  attributes: DocumentTemplateAttributes;
+};
+
+
+export type MutationDocumentTemplateDeleteArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDocumentTemplateUpdateArgs = {
+  attributes?: InputMaybe<DocumentTemplateAttributes>;
   id: Scalars['ID']['input'];
 };
 
@@ -4714,7 +5365,7 @@ export type MutationIndustryCreateArgs = {
 
 
 export type MutationInvoiceAddCreditArgs = {
-  amount: Scalars['Float']['input'];
+  amount?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['ID']['input'];
 };
 
@@ -4730,9 +5381,24 @@ export type MutationInvoiceDeleteCreditArgs = {
 };
 
 
+export type MutationInvoiceDequeueArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationInvoiceGenerateNextPeriodArgs = {
   accountId?: InputMaybe<Scalars['ID']['input']>;
   billUsageCharges?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type MutationInvoiceMergeArgs = {
+  invoiceIds: Array<Scalars['ID']['input']>;
+};
+
+
+export type MutationInvoiceMergeUndoArgs = {
+  invoiceId: Scalars['ID']['input'];
 };
 
 
@@ -4790,6 +5456,12 @@ export type MutationInvoiceUpdateArgs = {
 };
 
 
+export type MutationInvoiceUpdateCommentArgs = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationInvoiceUpdateCreditArgs = {
   amount: Scalars['Float']['input'];
   id: Scalars['ID']['input'];
@@ -4799,6 +5471,12 @@ export type MutationInvoiceUpdateCreditArgs = {
 export type MutationInvoiceUpdateCreditsArgs = {
   attributes: InvoiceUpdateCreditsAttributes;
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationInvoiceUpdateNotesArgs = {
+  id: Scalars['ID']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -5110,11 +5788,6 @@ export type MutationProductUpdateArgs = {
 };
 
 
-export type MutationProvisioningWorkflowTestArgs = {
-  platformId: Scalars['ID']['input'];
-};
-
-
 export type MutationQuoteAcceptArgs = {
   name: Scalars['String']['input'];
   poNumber?: InputMaybe<Scalars['String']['input']>;
@@ -5127,15 +5800,9 @@ export type MutationQuoteAcceptArgs = {
 export type MutationQuoteAccountSignupArgs = {
   accountName: Scalars['String']['input'];
   billingContact: ContactAttributes;
-  entityId: Scalars['ID']['input'];
+  billingDetails?: InputMaybe<BillingDetailsAttributes>;
   priceListCode: Scalars['String']['input'];
   quantity?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type MutationQuoteAddCouponArgs = {
-  couponCode: Scalars['String']['input'];
-  quoteId: Scalars['ID']['input'];
 };
 
 
@@ -5143,6 +5810,13 @@ export type MutationQuoteApplyChangesArgs = {
   persist?: InputMaybe<Scalars['Boolean']['input']>;
   quoteId: Scalars['ID']['input'];
   taxes?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type MutationQuoteApplyPriceAdjustmentsArgs = {
+  id: Scalars['ID']['input'];
+  priceAdjustmentPercentage: Scalars['Float']['input'];
+  startDate: Scalars['ISO8601Date']['input'];
 };
 
 
@@ -5163,17 +5837,40 @@ export type MutationQuoteApproveArgs = {
 
 
 export type MutationQuoteChangeAddArgs = {
+  evergreen?: InputMaybe<Scalars['Boolean']['input']>;
+  parentQuoteChangeId?: InputMaybe<Scalars['ID']['input']>;
+  priceAdjustmentAction?: InputMaybe<PriceAdjustmentAction>;
+  priceAdjustmentPercentage?: InputMaybe<Scalars['Float']['input']>;
+  priceAdjustmentTiming?: InputMaybe<PriceAdjustmentTiming>;
   priceListId: Scalars['ID']['input'];
-  priceOverride?: InputMaybe<Scalars['Boolean']['input']>;
   quoteId: Scalars['ID']['input'];
+  renewalTermMonths?: InputMaybe<Scalars['Int']['input']>;
   trial?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
+export type MutationQuoteChangeAddCouponArgs = {
+  couponCode: Scalars['String']['input'];
+  quoteChangeId: Scalars['ID']['input'];
+};
+
+
+export type MutationQuoteChangeApplyPriceAdjustmentArgs = {
+  priceAdjustmentPercentage?: InputMaybe<Scalars['Float']['input']>;
+  quoteChangeId: Scalars['ID']['input'];
+  startDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+};
+
+
 export type MutationQuoteChangeCreateArgs = {
+  evergreen?: InputMaybe<Scalars['Boolean']['input']>;
+  parentQuoteChangeId?: InputMaybe<Scalars['ID']['input']>;
+  priceAdjustmentAction?: InputMaybe<PriceAdjustmentAction>;
+  priceAdjustmentPercentage?: InputMaybe<Scalars['Float']['input']>;
+  priceAdjustmentTiming?: InputMaybe<PriceAdjustmentTiming>;
   priceListId: Scalars['ID']['input'];
-  priceOverride?: InputMaybe<Scalars['Boolean']['input']>;
   quoteId: Scalars['ID']['input'];
+  renewalTermMonths?: InputMaybe<Scalars['Int']['input']>;
   trial?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -5193,6 +5890,13 @@ export type MutationQuoteChangeCreateRampUpPreviewArgs = {
 };
 
 
+export type MutationQuoteChangeCreateRenewArgs = {
+  priceListId?: InputMaybe<Scalars['ID']['input']>;
+  quoteId: Scalars['ID']['input'];
+  subscriptionId: Scalars['ID']['input'];
+};
+
+
 export type MutationQuoteChangeDeleteArgs = {
   id: Scalars['ID']['input'];
 };
@@ -5205,10 +5909,27 @@ export type MutationQuoteChangeDiscountCreateArgs = {
 };
 
 
+export type MutationQuoteChangeRemoveCouponArgs = {
+  couponCode: Scalars['String']['input'];
+  quoteChangeId: Scalars['ID']['input'];
+};
+
+
+export type MutationQuoteChangeRevertPriceAdjustmentArgs = {
+  quoteChangeId: Scalars['ID']['input'];
+};
+
+
 export type MutationQuoteChangeUpdateArgs = {
   charges?: InputMaybe<Array<QuoteChargeAttributes>>;
+  evergreen?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
-  priceOverride?: InputMaybe<Scalars['Boolean']['input']>;
+  priceAdjustmentAction?: InputMaybe<PriceAdjustmentAction>;
+  priceAdjustmentPercentage?: InputMaybe<Scalars['Float']['input']>;
+  priceAdjustmentTiming?: InputMaybe<PriceAdjustmentTiming>;
+  renewalTermMonths?: InputMaybe<Scalars['Int']['input']>;
+  trial?: InputMaybe<Scalars['Boolean']['input']>;
+  trialStartDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
 };
 
 
@@ -5219,21 +5940,46 @@ export type MutationQuoteChangeUpdateRampUpArgs = {
 };
 
 
-export type MutationQuoteChargeFreeMonthsCreateArgs = {
-  attributes: QuoteFreeMonthsAttributes;
+export type MutationQuoteChargeCreateArgs = {
+  discount?: InputMaybe<Scalars['Boolean']['input']>;
+  endDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+  evergreen?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  price?: InputMaybe<Scalars['Float']['input']>;
+  priceListChargeId?: InputMaybe<Scalars['ID']['input']>;
+  priceTiers?: InputMaybe<Array<QuotePriceTierAttributes>>;
+  quantity?: InputMaybe<Scalars['Int']['input']>;
+  quoteChangeId: Scalars['ID']['input'];
+  startDate: Scalars['ISO8601Date']['input'];
+  subscriptionChargeId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type MutationQuoteChargeDeleteArgs = {
   quoteChargeId: Scalars['ID']['input'];
 };
 
 
+export type MutationQuoteChargeFreeMonthsCreateArgs = {
+  freeMonths: Scalars['Int']['input'];
+  freeMonthsAdd?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  priceListChargeId?: InputMaybe<Scalars['ID']['input']>;
+  quoteChangeId: Scalars['ID']['input'];
+  subscriptionChargeId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
 export type MutationQuoteChargeUpdateArgs = {
-  amount?: InputMaybe<Scalars['Float']['input']>;
   discount?: InputMaybe<Scalars['Float']['input']>;
   endDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
   price?: InputMaybe<Scalars['Float']['input']>;
-  priceTiers?: InputMaybe<Array<PriceListChargeTierAttributes>>;
+  priceTiers?: InputMaybe<Array<QuotePriceTierAttributes>>;
   quantity?: InputMaybe<Scalars['Int']['input']>;
   quoteChargeId: Scalars['ID']['input'];
   startDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+  subtotal?: InputMaybe<Scalars['Float']['input']>;
 };
 
 
@@ -5268,31 +6014,8 @@ export type MutationQuoteDuplicateArgs = {
 };
 
 
-export type MutationQuotePlanPreviewArgs = {
-  accountId?: InputMaybe<Scalars['ID']['input']>;
-  apply?: InputMaybe<Scalars['Boolean']['input']>;
-  basePrice?: InputMaybe<Scalars['Boolean']['input']>;
-  couponCode?: InputMaybe<Scalars['String']['input']>;
-  paymentId?: InputMaybe<Scalars['ID']['input']>;
-  priceListId: Scalars['ID']['input'];
-  quantity?: InputMaybe<Scalars['Int']['input']>;
-  subscriptionId?: InputMaybe<Scalars['ID']['input']>;
-  taxes?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-
 export type MutationQuotePollSigningUrlArgs = {
   quoteId?: InputMaybe<Scalars['ID']['input']>;
-};
-
-
-export type MutationQuotePreviewArgs = {
-  accountId?: InputMaybe<Scalars['ID']['input']>;
-  apply?: InputMaybe<Scalars['Boolean']['input']>;
-  freeze?: InputMaybe<Scalars['Boolean']['input']>;
-  paymentId?: InputMaybe<Scalars['ID']['input']>;
-  quoteId: Scalars['ID']['input'];
-  taxes?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -5307,18 +6030,55 @@ export type MutationQuoteRejectArgs = {
 };
 
 
-export type MutationQuoteRemoveCouponsArgs = {
-  quoteId: Scalars['ID']['input'];
+export type MutationQuoteSendEmailArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
-export type MutationQuoteSendEmailArgs = {
+export type MutationQuoteSignatureCreateArgs = {
+  name: Scalars['String']['input'];
+  poNumber?: InputMaybe<Scalars['String']['input']>;
+  signatureImageData: Scalars['String']['input'];
+  taxNumber?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationQuoteSignersSendEmailArgs = {
   id: Scalars['ID']['input'];
 };
 
 
 export type MutationQuoteSigningUrlCreateArgs = {
   quoteId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type MutationQuoteSubscriptionActivateArgs = {
+  subscriptionId: Scalars['ID']['input'];
+};
+
+
+export type MutationQuoteSubscriptionAddonArgs = {
+  priceListId?: InputMaybe<Scalars['ID']['input']>;
+  subscriptionId: Scalars['ID']['input'];
+};
+
+
+export type MutationQuoteSubscriptionDiscountArgs = {
+  ids: Array<Scalars['ID']['input']>;
+};
+
+
+export type MutationQuoteSubscriptionImportArgs = {
+  accountAttributes: AccountAttributes;
+  billingContactAttributes?: InputMaybe<ContactAttributes>;
+  chargeSettings?: InputMaybe<Array<ChargeSettingsImport>>;
+  featuresAttributes?: InputMaybe<Array<FeatureAttributes>>;
+  planAttributes?: InputMaybe<PlanAttributes>;
+  priceListAttributes: PriceListAttributes;
+  priceListChargesAttributes?: InputMaybe<Array<PriceListChargeAttributes>>;
+  productAttributes?: InputMaybe<ProductAttributes>;
 };
 
 
@@ -5329,6 +6089,7 @@ export type MutationQuoteSubscriptionReinstateArgs = {
 
 export type MutationQuoteSubscriptionRenewArgs = {
   ids: Array<Scalars['ID']['input']>;
+  priceListId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -5385,6 +6146,12 @@ export type MutationSignupCreateArgs = {
 };
 
 
+export type MutationStripeSubscriptionMigrateArgs = {
+  paymentMethodId?: InputMaybe<Scalars['String']['input']>;
+  quoteId: Scalars['ID']['input'];
+};
+
+
 export type MutationSubscriptionCancelArgs = {
   cancellationDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
   ids: Array<Scalars['ID']['input']>;
@@ -5399,6 +6166,16 @@ export type MutationSubscriptionCreateArgs = {
 
 export type MutationSubscriptionDeleteArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationSubscriptionQuantityUpdateArgs = {
+  allowQuantityLimitsOverride?: InputMaybe<Scalars['Boolean']['input']>;
+  invoiceImmediately?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  quantities: Array<SubscriptionChargeQuantityAttributes>;
+  startDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+  subscriptionId: Scalars['ID']['input'];
 };
 
 
@@ -5424,6 +6201,8 @@ export type MutationSubscriptionTenantUpdateArgs = {
 
 export type MutationSubscriptionTrialConvertArgs = {
   paymentId?: InputMaybe<Scalars['ID']['input']>;
+  priceListCode?: InputMaybe<Scalars['String']['input']>;
+  priceListId?: InputMaybe<Scalars['ID']['input']>;
   subscriptionId: Scalars['ID']['input'];
 };
 
@@ -5468,15 +6247,24 @@ export type MutationTenantMetricsUpdateArgs = {
 };
 
 
-export type MutationTenantProvisioningChangeUpdateArgs = {
-  attributes: TenantProvisioningChangeAttributes;
+export type MutationTenantUpdateArgs = {
+  attributes: TenantAttributes;
   id: Scalars['ID']['input'];
 };
 
 
-export type MutationTenantUpdateArgs = {
-  attributes: TenantAttributes;
-  id: Scalars['ID']['input'];
+export type MutationTestEmailArgs = {
+  body: Scalars['String']['input'];
+  subject: Scalars['String']['input'];
+};
+
+
+export type MutationTestWebhookArgs = {
+  authToken?: InputMaybe<Scalars['String']['input']>;
+  customPayload?: InputMaybe<Scalars['String']['input']>;
+  payloadType?: InputMaybe<Scalars['String']['input']>;
+  signingKey?: InputMaybe<Scalars['String']['input']>;
+  url: Scalars['String']['input'];
 };
 
 
@@ -5509,12 +6297,6 @@ export type MutationViewDeleteArgs = {
 export type MutationViewUpdateArgs = {
   attributes: ViewAttributes;
   id: Scalars['ID']['input'];
-};
-
-
-export type MutationWarrenProvisionArgs = {
-  attributes: WarrenAttributes;
-  tenantCode: Scalars['String']['input'];
 };
 
 
@@ -5679,13 +6461,23 @@ export type Payment = {
   appliedToInvoices?: Maybe<InvoiceConnection>;
   baseCurrencyCash?: Maybe<Scalars['Float']['output']>;
   baseCurrencyId?: Maybe<Scalars['ID']['output']>;
+  completedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  conversionRate?: Maybe<Scalars['Float']['output']>;
   createdAt: Scalars['ISO8601DateTime']['output'];
   currencyId?: Maybe<Scalars['ID']['output']>;
   description: Scalars['String']['output'];
+  entity?: Maybe<Entity>;
+  errorCode?: Maybe<Scalars['String']['output']>;
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  fees?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
   isLegacy?: Maybe<Scalars['Boolean']['output']>;
   memo: Scalars['String']['output'];
-  receivedAt: Scalars['ISO8601DateTime']['output'];
+  paymentProcessor?: Maybe<Scalars['String']['output']>;
+  processingState: PaymentProcessingState;
+  receivedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  remoteTransactionId?: Maybe<Scalars['String']['output']>;
+  startedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
   state: PaymentState;
   transactionRecord?: Maybe<Transaction>;
   updatedAt: Scalars['ISO8601DateTime']['output'];
@@ -5797,6 +6589,21 @@ export type PaymentEdge = {
   node?: Maybe<Payment>;
 };
 
+export type PaymentHold = {
+  __typename?: 'PaymentHold';
+  amount?: Maybe<Scalars['Float']['output']>;
+  completedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  createdAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  currency?: Maybe<Scalars['String']['output']>;
+  expiresAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  id?: Maybe<Scalars['ID']['output']>;
+  paymentMethod?: Maybe<PaymentMethod>;
+  quote?: Maybe<Quote>;
+  remoteTransactionId?: Maybe<Scalars['String']['output']>;
+  updatedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  uuid?: Maybe<Scalars['String']['output']>;
+};
+
 export type PaymentMethod = {
   __typename?: 'PaymentMethod';
   account?: Maybe<Account>;
@@ -5806,6 +6613,7 @@ export type PaymentMethod = {
   expirationDate?: Maybe<Scalars['ISO8601Date']['output']>;
   failureCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  isDefault?: Maybe<Scalars['Boolean']['output']>;
   lastSuccess?: Maybe<Scalars['ISO8601DateTime']['output']>;
   metadata?: Maybe<PaymentMethodMetadata>;
   paymentType?: Maybe<PaymentType>;
@@ -5844,6 +6652,7 @@ export type PaymentMethodMetadata = {
   identifier?: Maybe<Scalars['String']['output']>;
   issuer?: Maybe<Scalars['String']['output']>;
   kind?: Maybe<Scalars['String']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
 };
 
 export type PaymentMethodState =
@@ -5853,6 +6662,32 @@ export type PaymentMethodState =
   | 'SUCCESS'
   /** Payment method has not ben used or unknown state */
   | 'UNKNOWN';
+
+export type PaymentPlugin = {
+  __typename?: 'PaymentPlugin';
+  components: Scalars['JSON']['output'];
+  enabled: Scalars['Boolean']['output'];
+  entities: Array<Scalars['ID']['output']>;
+  guid: Scalars['ID']['output'];
+  hidden: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  status: Scalars['String']['output'];
+  type: Scalars['String']['output'];
+  webhookEnabled: Scalars['Boolean']['output'];
+};
+
+export type PaymentProcessingState =
+  /** Payment is disputed */
+  | 'DISPUTED'
+  /** Payment is failed */
+  | 'FAILED'
+  /** Payment is pending */
+  | 'PENDING'
+  /** Payment is processing */
+  | 'PROCESSING'
+  /** Payment is successful */
+  | 'SUCCEEDED';
 
 export type PaymentState =
   /** Payment is applied */
@@ -5887,7 +6722,6 @@ export type Period = {
   id: Scalars['ID']['output'];
   month?: Maybe<Scalars['Int']['output']>;
   monthName?: Maybe<Scalars['String']['output']>;
-  name?: Maybe<Scalars['String']['output']>;
   updatedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
   warrenId?: Maybe<Scalars['Int']['output']>;
   year?: Maybe<Scalars['Int']['output']>;
@@ -5937,6 +6771,8 @@ export type Plan = {
   __typename?: 'Plan';
   /** True if the plan is an add-on */
   addon?: Maybe<Scalars['Boolean']['output']>;
+  /** List of addon plans */
+  addonPlans?: Maybe<Array<Plan>>;
   /** First date the plan is available for sale */
   availableFrom: Scalars['ISO8601Date']['output'];
   /** Late date the plan is available for sale */
@@ -5945,6 +6781,10 @@ export type Plan = {
   basePrice?: Maybe<Scalars['Float']['output']>;
   /** Unique code */
   code?: Maybe<Scalars['String']['output']>;
+  /** List of compatible plan IDs */
+  compatiblePlanIds?: Maybe<Array<Scalars['ID']['output']>>;
+  /** List of compatible plans (ie plans that can be a parent plan to self) */
+  compatiblePlans?: Maybe<Array<Plan>>;
   /** Label for the contact us button */
   contactUsLabel?: Maybe<Scalars['String']['output']>;
   /** URL for the contact us button */
@@ -6000,6 +6840,7 @@ export type PlanAttributes = {
   availableFrom?: InputMaybe<Scalars['ISO8601Date']['input']>;
   availableTo?: InputMaybe<Scalars['ISO8601Date']['input']>;
   code?: InputMaybe<Scalars['String']['input']>;
+  compatiblePlanIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   /** Label for the contact us button */
   contactUsLabel?: InputMaybe<Scalars['String']['input']>;
   /** URL for the contact us button */
@@ -6243,15 +7084,12 @@ export type PluginActionMenuItem = {
   visible?: Maybe<Scalars['String']['output']>;
 };
 
-/** Attributes for creating and updating a plugin */
+/** Attributes for updating a plugin */
 export type PluginAttributes = {
   dynamicComponentValues?: InputMaybe<Array<DynamicComponentAttributes>>;
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   enabledOnlyForUserId?: InputMaybe<Scalars['ID']['input']>;
   entityIds?: InputMaybe<Array<Scalars['ID']['input']>>;
-  entitySelectionEnabled?: InputMaybe<Scalars['Boolean']['input']>;
-  guid?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
   pluginDefinitionId?: InputMaybe<Scalars['ID']['input']>;
 };
 
@@ -6599,8 +7437,48 @@ export type PortalSessionCreatePayload = {
   token?: Maybe<Scalars['String']['output']>;
 };
 
+/** Controls how the price adjustment is applied */
+export type PriceAdjustmentAction =
+  /** Price will be adjusted based on catalog prices */
+  | 'CATALOG'
+  /** No price adjustment will be applied */
+  | 'NO_CHANGE'
+  /** Price will be adjusted by a percentage */
+  | 'PERCENTAGE';
+
+/** Controls when the price adjustment takes effect */
+export type PriceAdjustmentTiming =
+  /** Price adjustment will be applied on April */
+  | 'APRIL'
+  /** Price adjustment will be applied at the renewal date */
+  | 'AT_RENEWAL'
+  /** Price adjustment will be applied on August */
+  | 'AUGUST'
+  /** Price adjustment will be applied on December */
+  | 'DECEMBER'
+  /** Price adjustment will be applied on February */
+  | 'FEBRUARY'
+  /** Price adjustment will be applied on January */
+  | 'JANUARY'
+  /** Price adjustment will be applied on July */
+  | 'JULY'
+  /** Price adjustment will be applied on June */
+  | 'JUNE'
+  /** Price adjustment will be applied on March */
+  | 'MARCH'
+  /** Price adjustment will be applied on May */
+  | 'MAY'
+  /** Price adjustment will be applied on November */
+  | 'NOVEMBER'
+  /** Price adjustment will be applied on October */
+  | 'OCTOBER'
+  /** Price adjustment will be applied on September */
+  | 'SEPTEMBER';
+
 export type PriceList = {
   __typename?: 'PriceList';
+  /** List of addons for this price list */
+  addonPlans?: Maybe<Array<Plan>>;
   /** The minimum amount you'll pay by using this plan */
   basePrice?: Maybe<Scalars['Float']['output']>;
   /** List of charges for this plan */
@@ -6617,6 +7495,8 @@ export type PriceList = {
   id: Scalars['ID']['output'];
   /** Controls whether the plan is visible for sale */
   isVisible?: Maybe<Scalars['Boolean']['output']>;
+  /** The minimum amount you'll pay by using this plan per month */
+  monthlyBasePrice?: Maybe<Scalars['Float']['output']>;
   /** Name of the price list */
   name: Scalars['String']['output'];
   /** Number of months per billing cycle */
@@ -6625,13 +7505,23 @@ export type PriceList = {
   plan?: Maybe<Plan>;
   /** ID of the plan the price list belongs to */
   planId: Scalars['ID']['output'];
+  priceAdjustmentAction?: Maybe<PriceAdjustmentAction>;
+  priceAdjustmentActionOptions: Array<Scalars['String']['output']>;
+  priceAdjustmentPercentage?: Maybe<Scalars['Float']['output']>;
+  priceAdjustmentTiming?: Maybe<PriceAdjustmentTiming>;
+  priceAdjustmentTimingOptions: Array<Scalars['String']['output']>;
   /** Auto-generated summary of the pricing */
   priceDescription?: Maybe<Scalars['String']['output']>;
   /** Default values for a new price list charge */
-  priceListChargeDefaults?: Maybe<PriceListCharge>;
+  priceListChargeDefaults?: Maybe<PriceListChargeDefault>;
   product?: Maybe<Product>;
   /** ID of the plan the product belongs to */
   productId?: Maybe<Scalars['ID']['output']>;
+  /** Number of months for the renewal term */
+  renewalTermMonths?: Maybe<Scalars['Int']['output']>;
+  renewalTermMonthsOptions: Array<RenewalTermOption>;
+  /** Controls whether the price is shown as monthly */
+  showPriceAsMonthly?: Maybe<Scalars['Boolean']['output']>;
   /** Stock keeping unit */
   sku?: Maybe<Scalars['String']['output']>;
   /** Determines whether a trial period is possible before paying */
@@ -6651,6 +7541,11 @@ export type PriceListAttributes = {
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   planId?: InputMaybe<Scalars['ID']['input']>;
+  priceAdjustmentAction?: InputMaybe<PriceAdjustmentAction>;
+  priceAdjustmentPercentage?: InputMaybe<Scalars['Float']['input']>;
+  priceAdjustmentTiming?: InputMaybe<PriceAdjustmentTiming>;
+  renewalTermMonths?: InputMaybe<Scalars['Int']['input']>;
+  showPriceAsMonthly?: InputMaybe<Scalars['Boolean']['input']>;
   sku?: InputMaybe<Scalars['String']['input']>;
   trialAllowed?: InputMaybe<Scalars['Boolean']['input']>;
   trialExpirationAction?: InputMaybe<TrialExpirationAction>;
@@ -6676,12 +7571,14 @@ export type PriceListCharge = {
   chargeType?: Maybe<ChargeType>;
   code?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['ISO8601DateTime']['output'];
-  /** The currency of the prices on the price list charge */
-  currencyId: Scalars['ID']['output'];
   feature?: Maybe<Feature>;
+  /** True if the charge is a feature add-on */
+  featureAddon?: Maybe<Scalars['Boolean']['output']>;
   featureId?: Maybe<Scalars['ID']['output']>;
   financialAccount?: Maybe<FinancialAccount>;
   financialAccountId?: Maybe<Scalars['ID']['output']>;
+  /** Controls whether to hide billing periods on invoices */
+  hidePeriodsOnInvoice: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   isTelecomCharge?: Maybe<Scalars['Boolean']['output']>;
   longName?: Maybe<Scalars['String']['output']>;
@@ -6722,8 +7619,12 @@ export type PriceListChargeAttributes = {
   billingPeriod?: InputMaybe<BillingPeriod>;
   chargeType?: InputMaybe<ChargeType>;
   code?: InputMaybe<Scalars['String']['input']>;
+  featureAddon?: InputMaybe<Scalars['Boolean']['input']>;
+  featureCode?: InputMaybe<Scalars['String']['input']>;
   featureId?: InputMaybe<Scalars['ID']['input']>;
   financialAccountId?: InputMaybe<Scalars['ID']['input']>;
+  /** Controls whether to hide billing periods on invoices */
+  hidePeriodsOnInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   isTelecomCharge?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
@@ -6761,6 +7662,14 @@ export type PriceListChargeCreatePayload = {
   __typename?: 'PriceListChargeCreatePayload';
   errors?: Maybe<Array<Scalars['String']['output']>>;
   priceListCharge?: Maybe<PriceListCharge>;
+};
+
+export type PriceListChargeDefault = {
+  __typename?: 'PriceListChargeDefault';
+  /** The currency of the prices on the plan */
+  currencyId: Scalars['ID']['output'];
+  /** ID of the plan the product belongs to */
+  productId?: Maybe<Scalars['ID']['output']>;
 };
 
 /** Autogenerated return type of PriceListChargeDelete. */
@@ -6869,6 +7778,8 @@ export type Product = {
   __typename?: 'Product';
   /** Unique code */
   code?: Maybe<Scalars['String']['output']>;
+  /** Timestamp the product was created */
+  createdAt: Scalars['ISO8601DateTime']['output'];
   /** Product description */
   description?: Maybe<Scalars['String']['output']>;
   /** Lays out plan features in typical everything-in-X-plus style */
@@ -6885,6 +7796,8 @@ export type Product = {
   planDefaults?: Maybe<Plan>;
   /** The plan available on the product */
   plans?: Maybe<Array<Plan>>;
+  /** Number of plans to display at once on the product page */
+  plansToDisplay?: Maybe<Scalars['Int']['output']>;
   /** Platform object */
   platform?: Maybe<Platform>;
   /** ID of the platform this plan is provisioned to */
@@ -6895,6 +7808,8 @@ export type Product = {
   productCategoryId?: Maybe<Scalars['ID']['output']>;
   /** Prefix quote and invoice line items with product name */
   showProductNameOnLineItem?: Maybe<Scalars['Boolean']['output']>;
+  /** Timestamp the product was last updated */
+  updatedAt: Scalars['ISO8601DateTime']['output'];
 };
 
 
@@ -6917,6 +7832,8 @@ export type ProductAttributes = {
   everythingInPlus?: InputMaybe<Scalars['Boolean']['input']>;
   internalNotes?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+  /** Number of plans to display at once on the product page */
+  plansToDisplay?: InputMaybe<Scalars['Int']['input']>;
   platformId?: InputMaybe<Scalars['ID']['input']>;
   productCategoryId?: InputMaybe<Scalars['ID']['input']>;
   /** Prefix quote and invoice line items with product name */
@@ -7035,12 +7952,6 @@ export type ProductUpdatePayload = {
   product?: Maybe<Product>;
 };
 
-/** Autogenerated return type of ProvisioningWorkflowTest. */
-export type ProvisioningWorkflowTestPayload = {
-  __typename?: 'ProvisioningWorkflowTestPayload';
-  errors?: Maybe<Array<Scalars['String']['output']>>;
-};
-
 export type Query = {
   __typename?: 'Query';
   /** An account record is used to represent a customer or trialist [REQUIRED_SCOPES:standard:read] */
@@ -7079,6 +7990,9 @@ export type Query = {
   campaign?: Maybe<Campaign>;
   /** Campaigns are used to track where contacts and leads originate from [REQUIRED_SCOPES:standard:read] */
   campaigns?: Maybe<CampaignConnection>;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  chat?: Maybe<Chat>;
+  chats: ChatConnection;
   /**  [REQUIRED_SCOPES:admin:read] */
   company?: Maybe<Company>;
   /** The contact record for a person on an account [REQUIRED_SCOPES:standard:read] */
@@ -7091,6 +8005,10 @@ export type Query = {
   coupons: CouponConnection;
   /**  [REQUIRED_SCOPES:billing:read] */
   creditNote?: Maybe<CreditNote>;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  creditNoteItem?: Maybe<CreditNoteItem>;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  creditNoteItems?: Maybe<CreditNoteItemConnection>;
   /**  [REQUIRED_SCOPES:billing:read] */
   creditNotes?: Maybe<CreditNoteConnection>;
   /**  [REQUIRED_SCOPES:standard:read] */
@@ -7109,9 +8027,23 @@ export type Query = {
   deals: DealConnection;
   deepEvents?: Maybe<EventConnection>;
   /**  [REQUIRED_SCOPES:billing:read] */
+  dispute?: Maybe<Dispute>;
+  /**  [REQUIRED_SCOPES:billing:read] */
   disputeReason?: Maybe<DisputeReason>;
   /**  [REQUIRED_SCOPES:billing:read] */
   disputeReasons?: Maybe<DisputeReasonConnection>;
+  /**  [REQUIRED_SCOPES:billing:read] */
+  disputes?: Maybe<DisputeConnection>;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  documentTemplate?: Maybe<DocumentTemplate>;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  documentTemplateComponent?: Maybe<DocumentTemplateComponent>;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  documentTemplateComponents?: Maybe<DocumentTemplateComponentConnection>;
+  /**  [REQUIRED_SCOPES:billing:read] */
+  documentTemplatePreview?: Maybe<DocumentTemplatePreview>;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  documentTemplates?: Maybe<DocumentTemplateConnection>;
   draftCreditNotes: CreditNoteConnection;
   draftInvoices: InvoiceConnection;
   /**  [REQUIRED_SCOPES:standard:read] */
@@ -7119,9 +8051,9 @@ export type Query = {
   /**  [REQUIRED_SCOPES:standard:read] */
   emails?: Maybe<EmailConnection>;
   enabledOnlyForUsers: UserConnection;
-  /**  [REQUIRED_SCOPES:admin:read] */
+  /**  [REQUIRED_SCOPES:standard:read] */
   entities?: Maybe<EntityConnection>;
-  /**  [REQUIRED_SCOPES:admin:read] */
+  /**  [REQUIRED_SCOPES:standard:read] */
   entity?: Maybe<Entity>;
   /**  [REQUIRED_SCOPES:standard:read] */
   entityBranding: EntityBranding;
@@ -7189,6 +8121,8 @@ export type Query = {
   journalEntryLine?: Maybe<JournalEntryLine>;
   /** The Journal Entry Line represents a financial transaction line item [REQUIRED_SCOPES:standard:read] */
   journalEntryLines?: Maybe<JournalEntryLineConnection>;
+  /** Launchpad metrics for revenue tracking [REQUIRED_SCOPES:standard:read] */
+  launchpad: Launchpad;
   /** Leads are used to track potential new opportunities and can be converted to accounts [REQUIRED_SCOPES:standard:read] */
   lead?: Maybe<Lead>;
   /** Source of the lead [REQUIRED_SCOPES:standard:read] */
@@ -7198,7 +8132,7 @@ export type Query = {
   /** Status of a lead [REQUIRED_SCOPES:standard:read] */
   leadStatus?: Maybe<LeadStatus>;
   /** Status of a lead [REQUIRED_SCOPES:standard:read] */
-  leadStatuses: LeadStatusConnection;
+  leadStatuses?: Maybe<LeadStatusConnection>;
   /** Leads are used to track potential new opportunities and can be converted to accounts [REQUIRED_SCOPES:standard:read] */
   leads: LeadConnection;
   /**  [REQUIRED_SCOPES:standard:read] */
@@ -7218,10 +8152,8 @@ export type Query = {
   paymentApplication?: Maybe<PaymentApplication>;
   /**  [REQUIRED_SCOPES:standard:read] */
   paymentApplications?: Maybe<PaymentApplicationConnection>;
-  /**  [REQUIRED_SCOPES:billing:read] */
-  paymentMethod?: Maybe<PaymentMethod>;
-  /**  [REQUIRED_SCOPES:billing:read] */
   paymentMethods?: Maybe<PaymentMethodConnection>;
+  paymentPlugins: Array<PaymentPlugin>;
   /**  [REQUIRED_SCOPES:standard:read] */
   payments?: Maybe<PaymentConnection>;
   /**  [REQUIRED_SCOPES:standard:read] */
@@ -7230,6 +8162,7 @@ export type Query = {
   periods: PeriodConnection;
   /**  [REQUIRED_SCOPES:product:read] */
   plan?: Maybe<Plan>;
+  /** @deprecated Use PriceListChangeOptions instead */
   planChangeOptions: PlanChangeOptions;
   /**  [REQUIRED_SCOPES:product:read] */
   planFeature?: Maybe<PlanFeature>;
@@ -7261,6 +8194,7 @@ export type Query = {
   pluginVendors?: Maybe<PluginVendorConnection>;
   /**  [REQUIRED_SCOPES:standard:read plugins:read] */
   plugins?: Maybe<PluginConnection>;
+  previewInvoice?: Maybe<FormattedInvoice>;
   /**  [REQUIRED_SCOPES:product:read] */
   priceList?: Maybe<PriceList>;
   priceListChangeOptions: PriceListChangeOptions;
@@ -7280,6 +8214,7 @@ export type Query = {
   productCategory?: Maybe<ProductCategory>;
   /**  [REQUIRED_SCOPES:product:read] */
   products: ProductConnection;
+  queuedInvoices: InvoiceConnection;
   /**  [REQUIRED_SCOPES:standard:read] */
   quote?: Maybe<Quote>;
   /**  [REQUIRED_SCOPES:standard:read] */
@@ -7296,12 +8231,11 @@ export type Query = {
   recurringRevenue?: Maybe<RecurringRevenue>;
   /**  [REQUIRED_SCOPES:billing:read] */
   recurringRevenues?: Maybe<RecurringRevenueConnection>;
-  /**  [REQUIRED_SCOPES:standard:read] */
-  revenueDetails?: Maybe<Array<RevenueDetail>>;
   /**  [REQUIRED_SCOPES:billing:read] */
   revenueMovement?: Maybe<RevenueMovement>;
-  /**  [REQUIRED_SCOPES:billing:read] */
   revenueMovements: RevenueMovementConnection;
+  /**  [REQUIRED_SCOPES:standard:read] */
+  revenueRecognitionExport: RevenueRecognitionExport;
   /**  [REQUIRED_SCOPES:standard:read] */
   revenueRecognitionTable: RevenueRecognitionTable;
   /**  [REQUIRED_SCOPES:security:read] */
@@ -7310,8 +8244,6 @@ export type Query = {
   /**  [REQUIRED_SCOPES:security:read] */
   roles?: Maybe<RoleConnection>;
   search: Array<SearchResult>;
-  /**  [REQUIRED_SCOPES:standard:read] */
-  secondaryBillingContacts: SecondaryBillingContactConnection;
   /**  [REQUIRED_SCOPES:billing:read] */
   subscription?: Maybe<Subscription>;
   /**  [REQUIRED_SCOPES:billing:read] */
@@ -7329,10 +8261,6 @@ export type Query = {
   templates?: Maybe<TemplateConnection>;
   /**  [REQUIRED_SCOPES:product:read] */
   tenant?: Maybe<Tenant>;
-  /**  [REQUIRED_SCOPES:standard:read] */
-  tenantProvisioningChange?: Maybe<TenantProvisioningChange>;
-  /**  [REQUIRED_SCOPES:standard:read] */
-  tenantProvisioningChanges?: Maybe<TenantProvisioningChangeConnection>;
   /**  [REQUIRED_SCOPES:product:read] */
   tenants?: Maybe<TenantConnection>;
   /**  [REQUIRED_SCOPES:billing:read] */
@@ -7353,6 +8281,8 @@ export type Query = {
   webhookEvent?: Maybe<WebhookEvent>;
   /** A webhook payload [REQUIRED_SCOPES:workflow:read] */
   webhookEvents: WebhookEventConnection;
+  /** Chart data for webhook event logs showing success and failure counts over the last 30 days [REQUIRED_SCOPES:workflow:read] */
+  webhookEventsChart: WebhookEventsChart;
   /** A workflow containing triggers and jobs [REQUIRED_SCOPES:workflow:read] */
   workflow?: Maybe<Workflow>;
   /** A workflow action definition [REQUIRED_SCOPES:workflow:read] */
@@ -7533,6 +8463,19 @@ export type QueryCampaignsArgs = {
 };
 
 
+export type QueryChatArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryChatsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryContactArgs = {
   code?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
@@ -7571,6 +8514,25 @@ export type QueryCreditNoteArgs = {
   code?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryCreditNoteItemArgs = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryCreditNoteItemsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  viewId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -7651,6 +8613,13 @@ export type QueryDeepEventsArgs = {
 };
 
 
+export type QueryDisputeArgs = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
 export type QueryDisputeReasonArgs = {
   code?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<Scalars['String']['input']>;
@@ -7659,6 +8628,61 @@ export type QueryDisputeReasonArgs = {
 
 
 export type QueryDisputeReasonsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  viewId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryDisputesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  viewId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryDocumentTemplateArgs = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryDocumentTemplateComponentArgs = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryDocumentTemplateComponentsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  viewId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryDocumentTemplatePreviewArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryDocumentTemplatesArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   before?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<Scalars['String']['input']>;
@@ -8018,6 +9042,12 @@ export type QueryJournalEntryLinesArgs = {
 };
 
 
+export type QueryLaunchpadArgs = {
+  entityId: Scalars['ID']['input'];
+  groupId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
 export type QueryLeadArgs = {
   id: Scalars['ID']['input'];
 };
@@ -8043,7 +9073,9 @@ export type QueryLeadSourcesArgs = {
 
 
 export type QueryLeadStatusArgs = {
-  id: Scalars['ID']['input'];
+  code?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -8052,6 +9084,7 @@ export type QueryLeadStatusesArgs = {
   before?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
+  format?: InputMaybe<Scalars['String']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<Scalars['String']['input']>;
   viewId?: InputMaybe<Scalars['ID']['input']>;
@@ -8134,22 +9167,19 @@ export type QueryPaymentApplicationsArgs = {
 };
 
 
-export type QueryPaymentMethodArgs = {
-  code?: InputMaybe<Scalars['String']['input']>;
-  format?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-};
-
-
 export type QueryPaymentMethodsArgs = {
+  accountId?: InputMaybe<Scalars['ID']['input']>;
   after?: InputMaybe<Scalars['String']['input']>;
   before?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
-  format?: InputMaybe<Scalars['String']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<Scalars['String']['input']>;
-  viewId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryPaymentPluginsArgs = {
+  accountId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -8335,6 +9365,12 @@ export type QueryPluginsArgs = {
 };
 
 
+export type QueryPreviewInvoiceArgs = {
+  accountId: Scalars['ID']['input'];
+  billingDate: Scalars['ISO8601Date']['input'];
+};
+
+
 export type QueryPriceListArgs = {
   code?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<Scalars['String']['input']>;
@@ -8380,7 +9416,8 @@ export type QueryPriceListsArgs = {
 
 
 export type QueryProductArgs = {
-  id: Scalars['ID']['input'];
+  code?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -8411,6 +9448,16 @@ export type QueryProductsArgs = {
   last?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<Scalars['String']['input']>;
   viewId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryQueuedInvoicesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  filter?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -8490,11 +9537,6 @@ export type QueryRecurringRevenuesArgs = {
 };
 
 
-export type QueryRevenueDetailsArgs = {
-  accountId?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryRevenueMovementArgs = {
   id: Scalars['ID']['input'];
 };
@@ -8508,6 +9550,15 @@ export type QueryRevenueMovementsArgs = {
   last?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<Scalars['String']['input']>;
   viewId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryRevenueRecognitionExportArgs = {
+  entityId: Scalars['ID']['input'];
+  filter?: InputMaybe<Scalars['String']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+  year: Scalars['Int']['input'];
 };
 
 
@@ -8549,17 +9600,6 @@ export type QueryRolesArgs = {
 
 export type QuerySearchArgs = {
   text: Scalars['String']['input'];
-};
-
-
-export type QuerySecondaryBillingContactsArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  viewId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -8633,25 +9673,6 @@ export type QueryTenantArgs = {
   code?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-};
-
-
-export type QueryTenantProvisioningChangeArgs = {
-  code?: InputMaybe<Scalars['String']['input']>;
-  format?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-};
-
-
-export type QueryTenantProvisioningChangesArgs = {
-  after?: InputMaybe<Scalars['String']['input']>;
-  before?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Int']['input']>;
-  format?: InputMaybe<Scalars['String']['input']>;
-  last?: InputMaybe<Scalars['Int']['input']>;
-  sort?: InputMaybe<Scalars['String']['input']>;
-  viewId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -8807,15 +9828,19 @@ export type QueryWorkflowsArgs = {
 
 export type Quote = {
   __typename?: 'Quote';
+  acceptedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
   acceptedByName?: Maybe<Scalars['String']['output']>;
   acceptedByTitle?: Maybe<Scalars['String']['output']>;
   account?: Maybe<Account>;
   accountId: Scalars['ID']['output'];
   amount: Scalars['Float']['output'];
+  /** Formatted amount with currency symbol */
+  amountAsCurrency: Scalars['String']['output'];
   amountDue?: Maybe<Scalars['Float']['output']>;
   amountsByPeriod: Array<PeriodAmount>;
   applicationDate?: Maybe<Scalars['ISO8601Date']['output']>;
   applied: Scalars['Boolean']['output'];
+  applyOnAccept?: Maybe<Scalars['Boolean']['output']>;
   approvalRequest?: Maybe<ApprovalRequest>;
   backdatedPeriods?: Maybe<Scalars['Boolean']['output']>;
   backdatedQuote?: Maybe<Scalars['Boolean']['output']>;
@@ -8823,20 +9848,29 @@ export type Quote = {
   billingDay?: Maybe<Scalars['Int']['output']>;
   contact?: Maybe<Contact>;
   contactId?: Maybe<Scalars['ID']['output']>;
+  /** Contact signers IDs */
+  contactSignerIds?: Maybe<Array<Scalars['ID']['output']>>;
+  /** Contact signers */
+  contactSigners?: Maybe<Array<Contact>>;
   createdAt: Scalars['ISO8601DateTime']['output'];
   /** Credits granted from plan upgrades */
   credits?: Maybe<Scalars['Float']['output']>;
   currencyId: Scalars['ID']['output'];
+  currentPaymentHold?: Maybe<PaymentHold>;
   deal?: Maybe<Deal>;
   dealId?: Maybe<Scalars['ID']['output']>;
   discount?: Maybe<Scalars['Float']['output']>;
   /** Amount discounted from subtotal */
   discountValue: Scalars['Float']['output'];
+  documentTemplate?: Maybe<DocumentTemplate>;
+  documentTemplateId?: Maybe<Scalars['ID']['output']>;
   documents?: Maybe<Array<Document>>;
   endDate: Scalars['ISO8601Date']['output'];
   endDateOptions?: Maybe<Array<DateOption>>;
+  entity: Entity;
   evergreen?: Maybe<Scalars['Boolean']['output']>;
   expiresAt: Scalars['ISO8601Date']['output'];
+  files?: Maybe<Array<Document>>;
   firstInvoice?: Maybe<Invoice>;
   formattedQuote?: Maybe<FormattedQuote>;
   /** Null when previewing */
@@ -8857,6 +9891,7 @@ export type Quote = {
   number?: Maybe<Scalars['String']['output']>;
   owner?: Maybe<User>;
   ownerId?: Maybe<Scalars['ID']['output']>;
+  payToAccept?: Maybe<Scalars['Boolean']['output']>;
   payableId?: Maybe<Scalars['ID']['output']>;
   /** Amount for a single full period of the subscription */
   periodAmount?: Maybe<Scalars['Float']['output']>;
@@ -8864,6 +9899,8 @@ export type Quote = {
   poNumber?: Maybe<Scalars['String']['output']>;
   quoteChanges?: Maybe<Array<QuoteChange>>;
   requiresApproval: Scalars['Boolean']['output'];
+  sharedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  signingMetadata?: Maybe<SigningMetadata>;
   /** Amount in the currency smallest unit */
   smallUnitAmountDue?: Maybe<Scalars['Int']['output']>;
   splitInvoice?: Maybe<Scalars['Boolean']['output']>;
@@ -8876,7 +9913,12 @@ export type Quote = {
   /** Approval rules triggered by the quote properties */
   triggeredApprovalRules?: Maybe<Array<ApprovalRule>>;
   updatedAt: Scalars['ISO8601DateTime']['output'];
+  /** User signers IDs */
+  userSignerIds?: Maybe<Array<Scalars['ID']['output']>>;
+  /** User signers */
+  userSigners?: Maybe<Array<QuoteUserSigner>>;
   uuid: Scalars['ID']['output'];
+  viewedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
 };
 
 
@@ -8902,13 +9944,6 @@ export type QuoteAccountSignupPayload = {
   tenant?: Maybe<Tenant>;
 };
 
-/** Autogenerated return type of QuoteAddCoupon. */
-export type QuoteAddCouponPayload = {
-  __typename?: 'QuoteAddCouponPayload';
-  errors?: Maybe<Scalars['String']['output']>;
-  quote?: Maybe<Quote>;
-};
-
 /** Autogenerated return type of QuoteApplyChanges. */
 export type QuoteApplyChangesPayload = {
   __typename?: 'QuoteApplyChangesPayload';
@@ -8916,6 +9951,13 @@ export type QuoteApplyChangesPayload = {
   invoice?: Maybe<Invoice>;
   quote: Quote;
   subscriptions?: Maybe<Array<Subscription>>;
+};
+
+/** Autogenerated return type of QuoteApplyPriceAdjustments. */
+export type QuoteApplyPriceAdjustmentsPayload = {
+  __typename?: 'QuoteApplyPriceAdjustmentsPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quote?: Maybe<Quote>;
 };
 
 /** Autogenerated return type of QuoteApprovalCancel. */
@@ -8939,11 +9981,15 @@ export type QuoteApprovePayload = {
 
 export type QuoteAttributes = {
   accountId?: InputMaybe<Scalars['ID']['input']>;
+  applyOnAccept?: InputMaybe<Scalars['Boolean']['input']>;
   backdatedPeriods?: InputMaybe<Scalars['Boolean']['input']>;
   contactId?: InputMaybe<Scalars['ID']['input']>;
+  /** Contact signers IDs */
+  contactSignerIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   currencyId?: InputMaybe<Scalars['String']['input']>;
   dealId?: InputMaybe<Scalars['ID']['input']>;
   discount?: InputMaybe<Scalars['Float']['input']>;
+  documentTemplateId?: InputMaybe<Scalars['ID']['input']>;
   endDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
   evergreen?: InputMaybe<Scalars['Boolean']['input']>;
   expiresAt?: InputMaybe<Scalars['ISO8601Date']['input']>;
@@ -8956,39 +10002,74 @@ export type QuoteAttributes = {
   /** Notes pertaining to the quote */
   notes?: InputMaybe<Scalars['String']['input']>;
   ownerId?: InputMaybe<Scalars['ID']['input']>;
+  payToAccept?: InputMaybe<Scalars['Boolean']['input']>;
   poNumber?: InputMaybe<Scalars['String']['input']>;
   splitInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   startDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+  /** User signers IDs */
+  userSignerIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 export type QuoteChange = {
   __typename?: 'QuoteChange';
+  /** Addon quote changes for the quote change */
+  addonQuoteChanges?: Maybe<Array<QuoteChange>>;
   charges: Array<QuoteCharge>;
   currencyId: Scalars['ID']['output'];
+  /** Subscription charges for the configured date */
+  currentSubscriptionCharges?: Maybe<Array<SubscriptionCharge>>;
   endDate?: Maybe<Scalars['ISO8601Date']['output']>;
+  evergreen?: Maybe<Scalars['Boolean']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
   /** The available interval months options for ramp up changes */
   intervalMonthsOptions?: Maybe<Array<Scalars['Int']['output']>>;
+  isTrial: Scalars['Boolean']['output'];
   kind: QuoteChangeKind;
   name: Scalars['String']['output'];
+  priceAdjustmentAction?: Maybe<PriceAdjustmentAction>;
+  priceAdjustmentActionOptions: Array<Scalars['String']['output']>;
+  priceAdjustmentAllowed?: Maybe<Scalars['Boolean']['output']>;
+  priceAdjustmentLastDate?: Maybe<Scalars['ISO8601Date']['output']>;
+  priceAdjustmentPercentage?: Maybe<Scalars['Float']['output']>;
+  priceAdjustmentTiming?: Maybe<PriceAdjustmentTiming>;
+  priceAdjustmentTimingOptions: Array<Scalars['String']['output']>;
   priceList?: Maybe<PriceList>;
   priceListId?: Maybe<Scalars['ID']['output']>;
-  /** Standard pricing is used unless this is true */
-  priceOverride?: Maybe<Scalars['Boolean']['output']>;
   quote: Quote;
   quoteId: Scalars['ID']['output'];
   quotePlan: QuotePlan;
   quotePlanId: Scalars['ID']['output'];
   /** The selected interval months for ramp up changes */
   rampIntervalMonths?: Maybe<Scalars['Int']['output']>;
+  /** Description of the renwal settings */
+  renewalSummary?: Maybe<Scalars['String']['output']>;
+  /** Number of months for the renewal term */
+  renewalTermMonths?: Maybe<Scalars['Int']['output']>;
+  renewalTermMonthsOptions: Array<RenewalTermOption>;
   startDate?: Maybe<Scalars['ISO8601Date']['output']>;
   subscription?: Maybe<Subscription>;
   subscriptionId?: Maybe<Scalars['ID']['output']>;
+  trialEndDate?: Maybe<Scalars['ISO8601Date']['output']>;
+  trialStartDate?: Maybe<Scalars['ISO8601Date']['output']>;
 };
 
 
 export type QuoteChangeChargesArgs = {
   sort?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Autogenerated return type of QuoteChangeAddCoupon. */
+export type QuoteChangeAddCouponPayload = {
+  __typename?: 'QuoteChangeAddCouponPayload';
+  errors?: Maybe<Scalars['String']['output']>;
+  quoteChange?: Maybe<QuoteChange>;
+};
+
+/** Autogenerated return type of QuoteChangeApplyPriceAdjustment. */
+export type QuoteChangeApplyPriceAdjustmentPayload = {
+  __typename?: 'QuoteChangeApplyPriceAdjustmentPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quoteChange?: Maybe<QuoteChange>;
 };
 
 /** The connection type for QuoteChange. */
@@ -9025,6 +10106,13 @@ export type QuoteChangeCreateRampUpPreviewPayload = {
   quoteChange?: Maybe<QuoteChange>;
 };
 
+/** Autogenerated return type of QuoteChangeCreateRenew. */
+export type QuoteChangeCreateRenewPayload = {
+  __typename?: 'QuoteChangeCreateRenewPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quoteChange?: Maybe<QuoteChange>;
+};
+
 /** Autogenerated return type of QuoteChangeDelete. */
 export type QuoteChangeDeletePayload = {
   __typename?: 'QuoteChangeDeletePayload';
@@ -9050,6 +10138,8 @@ export type QuoteChangeEdge = {
 };
 
 export type QuoteChangeKind =
+  /** Activate quote */
+  | 'ACTIVATE'
   /** Adjustment quote */
   | 'ADJUSTMENT'
   /** Coupon quote */
@@ -9058,6 +10148,12 @@ export type QuoteChangeKind =
   | 'CREDIT'
   /** Discount quote */
   | 'DISCOUNT'
+  /** Free_period_discount quote */
+  | 'FREE_PERIOD_DISCOUNT'
+  /** Price_update quote */
+  | 'PRICE_UPDATE'
+  /** Quantity_update quote */
+  | 'QUANTITY_UPDATE'
   /** Reinstate quote */
   | 'REINSTATE'
   /** Renew quote */
@@ -9068,6 +10164,20 @@ export type QuoteChangeKind =
   | 'UNSUBSCRIBE'
   /** Update quote */
   | 'UPDATE';
+
+/** Autogenerated return type of QuoteChangeRemoveCoupon. */
+export type QuoteChangeRemoveCouponPayload = {
+  __typename?: 'QuoteChangeRemoveCouponPayload';
+  errors?: Maybe<Scalars['String']['output']>;
+  quoteChange?: Maybe<QuoteChange>;
+};
+
+/** Autogenerated return type of QuoteChangeRevertPriceAdjustment. */
+export type QuoteChangeRevertPriceAdjustmentPayload = {
+  __typename?: 'QuoteChangeRevertPriceAdjustmentPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quoteChange?: Maybe<QuoteChange>;
+};
 
 /** Autogenerated return type of QuoteChangeUpdate. */
 export type QuoteChangeUpdatePayload = {
@@ -9090,16 +10200,20 @@ export type QuoteCharge = {
   billingPeriod?: Maybe<BillingPeriod>;
   billingPeriodAmounts?: Maybe<Array<BillingPeriodAmount>>;
   chargeType?: Maybe<ChargeType>;
+  coupon?: Maybe<Coupon>;
   couponId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['ISO8601DateTime']['output'];
   currencyId: Scalars['ID']['output'];
+  currentPrice?: Maybe<Scalars['Float']['output']>;
   currentQuantity?: Maybe<Scalars['Int']['output']>;
   discount?: Maybe<Scalars['Float']['output']>;
   endDate: Scalars['ISO8601Date']['output'];
+  evergreen: Scalars['Boolean']['output'];
   feature?: Maybe<Feature>;
   id?: Maybe<Scalars['ID']['output']>;
   invoiceLineText?: Maybe<Scalars['String']['output']>;
   isRamp: Scalars['Boolean']['output'];
+  isTrial: Scalars['Boolean']['output'];
   kind?: Maybe<QuoteChangeKind>;
   name?: Maybe<Scalars['String']['output']>;
   price?: Maybe<Scalars['Float']['output']>;
@@ -9131,6 +10245,7 @@ export type QuoteChargeAttributes = {
   /** Discount rate for the charge */
   discount?: InputMaybe<Scalars['Float']['input']>;
   endDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
+  evergreen?: InputMaybe<Scalars['Boolean']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   price?: InputMaybe<Scalars['BigDecimal']['input']>;
@@ -9151,6 +10266,20 @@ export type QuoteChargeConnection = {
   /** Information to aid in pagination. */
   pageInfo: PageInfo;
   totalCount: Scalars['Int']['output'];
+};
+
+/** Autogenerated return type of QuoteChargeCreate. */
+export type QuoteChargeCreatePayload = {
+  __typename?: 'QuoteChargeCreatePayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quoteCharge?: Maybe<QuoteCharge>;
+};
+
+/** Autogenerated return type of QuoteChargeDelete. */
+export type QuoteChargeDeletePayload = {
+  __typename?: 'QuoteChargeDeletePayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quoteCharge?: Maybe<QuoteCharge>;
 };
 
 /** An edge in a connection. */
@@ -9207,6 +10336,7 @@ export type QuoteCreatePayload = {
 export type QuoteCreateSignUrlPayload = {
   __typename?: 'QuoteCreateSignUrlPayload';
   errors?: Maybe<Array<Scalars['String']['output']>>;
+  message?: Maybe<Scalars['String']['output']>;
   pluginClientId?: Maybe<Scalars['String']['output']>;
   pluginShortName?: Maybe<Scalars['String']['output']>;
   redirectUri?: Maybe<Scalars['String']['output']>;
@@ -9241,13 +10371,6 @@ export type QuoteEdge = {
   cursor: Scalars['String']['output'];
   /** The item at the end of the edge. */
   node?: Maybe<Quote>;
-};
-
-export type QuoteFreeMonthsAttributes = {
-  freeMonths: Scalars['Int']['input'];
-  /** Whether the free periods should be added to the quote period */
-  freeMonthsAdd?: InputMaybe<Scalars['Boolean']['input']>;
-  name: Scalars['String']['input'];
 };
 
 export type QuoteLine = {
@@ -9302,16 +10425,6 @@ export type QuotePlan = {
   updatedAt: Scalars['ISO8601DateTime']['output'];
 };
 
-export type QuotePlanPreview = {
-  __typename?: 'QuotePlanPreview';
-  errors?: Maybe<Array<Scalars['String']['output']>>;
-  formattedInvoice?: Maybe<FormattedInvoice>;
-  formattedQuote: FormattedQuote;
-  invoice?: Maybe<Invoice>;
-  quote: Quote;
-  subscriptions: Array<Subscription>;
-};
-
 /** Autogenerated return type of QuotePollSigningUrl. */
 export type QuotePollSigningUrlPayload = {
   __typename?: 'QuotePollSigningUrlPayload';
@@ -9329,6 +10442,11 @@ export type QuotePriceTier = {
   starts?: Maybe<Scalars['Int']['output']>;
 };
 
+export type QuotePriceTierAttributes = {
+  price: Scalars['Float']['input'];
+  starts: Scalars['Int']['input'];
+};
+
 /** Autogenerated return type of QuoteRecalculateTaxes. */
 export type QuoteRecalculateTaxesPayload = {
   __typename?: 'QuoteRecalculateTaxesPayload';
@@ -9342,16 +10460,21 @@ export type QuoteRejectPayload = {
   errors?: Maybe<Scalars['String']['output']>;
 };
 
-/** Autogenerated return type of QuoteRemoveCoupons. */
-export type QuoteRemoveCouponsPayload = {
-  __typename?: 'QuoteRemoveCouponsPayload';
-  errors?: Maybe<Scalars['String']['output']>;
-  quote?: Maybe<Quote>;
-};
-
 /** Autogenerated return type of QuoteSendEmail. */
 export type QuoteSendEmailPayload = {
   __typename?: 'QuoteSendEmailPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+};
+
+/** Autogenerated return type of QuoteSignatureCreate. */
+export type QuoteSignatureCreatePayload = {
+  __typename?: 'QuoteSignatureCreatePayload';
+  errors?: Maybe<Scalars['String']['output']>;
+};
+
+/** Autogenerated return type of QuoteSignersSendEmail. */
+export type QuoteSignersSendEmailPayload = {
+  __typename?: 'QuoteSignersSendEmailPayload';
   errors?: Maybe<Array<Scalars['String']['output']>>;
 };
 
@@ -9372,6 +10495,34 @@ export type QuoteState =
   | 'UNDONE'
   /** Viewed quote */
   | 'VIEWED';
+
+/** Autogenerated return type of QuoteSubscriptionActivate. */
+export type QuoteSubscriptionActivatePayload = {
+  __typename?: 'QuoteSubscriptionActivatePayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quote?: Maybe<Quote>;
+};
+
+/** Autogenerated return type of QuoteSubscriptionAddon. */
+export type QuoteSubscriptionAddonPayload = {
+  __typename?: 'QuoteSubscriptionAddonPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quote?: Maybe<Quote>;
+};
+
+/** Autogenerated return type of QuoteSubscriptionDiscount. */
+export type QuoteSubscriptionDiscountPayload = {
+  __typename?: 'QuoteSubscriptionDiscountPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quote?: Maybe<Quote>;
+};
+
+/** Autogenerated return type of QuoteSubscriptionImport. */
+export type QuoteSubscriptionImportPayload = {
+  __typename?: 'QuoteSubscriptionImportPayload';
+  errors: Array<Scalars['String']['output']>;
+  quote?: Maybe<Quote>;
+};
 
 /** Autogenerated return type of QuoteSubscriptionReinstate. */
 export type QuoteSubscriptionReinstatePayload = {
@@ -9424,6 +10575,32 @@ export type QuoteUpdatePayload = {
   quote?: Maybe<Quote>;
 };
 
+export type QuoteUserSigner = {
+  __typename?: 'QuoteUserSigner';
+  allowLoginViaEmailLink?: Maybe<Scalars['Boolean']['output']>;
+  createdAt: Scalars['ISO8601DateTime']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  enabled?: Maybe<Scalars['Boolean']['output']>;
+  entityId?: Maybe<Scalars['ID']['output']>;
+  firstName: Scalars['String']['output'];
+  fullName: Scalars['String']['output'];
+  groupId?: Maybe<Scalars['ID']['output']>;
+  id: Scalars['ID']['output'];
+  imageUrl: Scalars['String']['output'];
+  lastLogin?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  lastName?: Maybe<Scalars['String']['output']>;
+  managerUser?: Maybe<User>;
+  managerUserId?: Maybe<Scalars['ID']['output']>;
+  profile?: Maybe<UserProfile>;
+  role?: Maybe<Role>;
+  roleId?: Maybe<Scalars['ID']['output']>;
+  subordinates?: Maybe<Array<User>>;
+  /** The user's work title */
+  title?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['ISO8601DateTime']['output'];
+  uuid?: Maybe<Scalars['String']['output']>;
+};
+
 export type RecurringRevenue = {
   __typename?: 'RecurringRevenue';
   /** Account the revenue belongs to */
@@ -9468,14 +10645,12 @@ export type RelatedObject = {
   name: Scalars['String']['output'];
 };
 
-export type RevenueDetail = {
-  __typename?: 'RevenueDetail';
-  currencyId?: Maybe<Scalars['ID']['output']>;
-  deferred?: Maybe<Scalars['Float']['output']>;
-  id?: Maybe<Scalars['Int']['output']>;
-  month?: Maybe<Scalars['Int']['output']>;
-  recognized?: Maybe<Scalars['Float']['output']>;
-  year?: Maybe<Scalars['Int']['output']>;
+export type RenewalTermOption = {
+  __typename?: 'RenewalTermOption';
+  /** Number of months for this renewal term option */
+  id: Scalars['Int']['output'];
+  /** Human readable label for the renewal term option */
+  name: Scalars['String']['output'];
 };
 
 export type RevenueMovement = {
@@ -9538,6 +10713,43 @@ export type RevenueRecognitionDocument = {
   totals: Array<RevenueRecognitionMonths>;
 };
 
+export type RevenueRecognitionExport = {
+  __typename?: 'RevenueRecognitionExport';
+  rows: Array<RevenueRecognitionExportRow>;
+};
+
+export type RevenueRecognitionExportRow = {
+  __typename?: 'RevenueRecognitionExportRow';
+  accountName?: Maybe<Scalars['String']['output']>;
+  aprilBalance?: Maybe<Scalars['Float']['output']>;
+  aprilRevenue?: Maybe<Scalars['Float']['output']>;
+  augustBalance?: Maybe<Scalars['Float']['output']>;
+  augustRevenue?: Maybe<Scalars['Float']['output']>;
+  decemberBalance?: Maybe<Scalars['Float']['output']>;
+  decemberRevenue?: Maybe<Scalars['Float']['output']>;
+  februaryBalance?: Maybe<Scalars['Float']['output']>;
+  februaryRevenue?: Maybe<Scalars['Float']['output']>;
+  invoiceNumber?: Maybe<Scalars['String']['output']>;
+  januaryBalance?: Maybe<Scalars['Float']['output']>;
+  januaryRevenue?: Maybe<Scalars['Float']['output']>;
+  julyBalance?: Maybe<Scalars['Float']['output']>;
+  julyRevenue?: Maybe<Scalars['Float']['output']>;
+  juneBalance?: Maybe<Scalars['Float']['output']>;
+  juneRevenue?: Maybe<Scalars['Float']['output']>;
+  lineText?: Maybe<Scalars['String']['output']>;
+  marchBalance?: Maybe<Scalars['Float']['output']>;
+  marchRevenue?: Maybe<Scalars['Float']['output']>;
+  mayBalance?: Maybe<Scalars['Float']['output']>;
+  mayRevenue?: Maybe<Scalars['Float']['output']>;
+  novemberBalance?: Maybe<Scalars['Float']['output']>;
+  novemberRevenue?: Maybe<Scalars['Float']['output']>;
+  octoberBalance?: Maybe<Scalars['Float']['output']>;
+  octoberRevenue?: Maybe<Scalars['Float']['output']>;
+  period?: Maybe<Scalars['String']['output']>;
+  septemberBalance?: Maybe<Scalars['Float']['output']>;
+  septemberRevenue?: Maybe<Scalars['Float']['output']>;
+};
+
 export type RevenueRecognitionItem = {
   __typename?: 'RevenueRecognitionItem';
   id: Scalars['ID']['output'];
@@ -9557,6 +10769,7 @@ export type RevenueRecognitionTable = {
   __typename?: 'RevenueRecognitionTable';
   accounts: Array<RevenueRecognitionAccount>;
   dateLabels: Array<RevenueRecognitionDateLabel>;
+  fiscalYearStartMonth: Scalars['Int']['output'];
   totals: Array<RevenueRecognitionMonths>;
 };
 
@@ -9651,31 +10864,60 @@ export type SearchResult = {
   objUpdatedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
 };
 
-export type SecondaryBillingContact = {
-  __typename?: 'SecondaryBillingContact';
-  accountId: Scalars['ID']['output'];
-  contactId: Scalars['ID']['output'];
+export type SignatureField = {
+  __typename?: 'SignatureField';
+  /** Field type (sig or date) */
+  fieldType?: Maybe<Scalars['String']['output']>;
+  /** Height */
+  height?: Maybe<Scalars['Int']['output']>;
+  /** Height percentage */
+  heightPct?: Maybe<Scalars['Float']['output']>;
+  /** Left */
+  left?: Maybe<Scalars['Int']['output']>;
+  /** Left percentage */
+  leftPct?: Maybe<Scalars['Float']['output']>;
+  /** Page index */
+  pageIndex?: Maybe<Scalars['Int']['output']>;
+  /** Raw URI */
+  rawUri?: Maybe<Scalars['String']['output']>;
+  /** Signer ID */
+  signerId?: Maybe<Scalars['Int']['output']>;
+  /** Signer type (user or contact) */
+  signerType?: Maybe<Scalars['String']['output']>;
+  /** Top */
+  top?: Maybe<Scalars['Int']['output']>;
+  /** Top percentage */
+  topPct?: Maybe<Scalars['Float']['output']>;
+  /** Units */
+  units?: Maybe<Scalars['String']['output']>;
+  /** Width */
+  width?: Maybe<Scalars['Int']['output']>;
+  /** Width percentage */
+  widthPct?: Maybe<Scalars['Float']['output']>;
 };
 
-/** The connection type for SecondaryBillingContact. */
-export type SecondaryBillingContactConnection = {
-  __typename?: 'SecondaryBillingContactConnection';
-  /** A list of edges. */
-  edges?: Maybe<Array<Maybe<SecondaryBillingContactEdge>>>;
-  /** A list of nodes. */
-  nodes?: Maybe<Array<Maybe<SecondaryBillingContact>>>;
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
-  totalCount: Scalars['Int']['output'];
+export type Signer = {
+  __typename?: 'Signer';
+  /** Signer email */
+  email?: Maybe<Scalars['String']['output']>;
+  /** Signer name */
+  fullName?: Maybe<Scalars['String']['output']>;
+  /** Signer ID */
+  id?: Maybe<Scalars['ID']['output']>;
+  /** Signed */
+  signed?: Maybe<Scalars['Boolean']['output']>;
+  /** Signed at */
+  signedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
+  /** Signer type (user or contact) */
+  type?: Maybe<Scalars['String']['output']>;
 };
 
-/** An edge in a connection. */
-export type SecondaryBillingContactEdge = {
-  __typename?: 'SecondaryBillingContactEdge';
-  /** A cursor for use in pagination. */
-  cursor: Scalars['String']['output'];
-  /** The item at the end of the edge. */
-  node?: Maybe<SecondaryBillingContact>;
+export type SigningMetadata = {
+  __typename?: 'SigningMetadata';
+  /** Signature field coordinates */
+  signatureFields?: Maybe<Array<SignatureField>>;
+  /** Signer details */
+  signer?: Maybe<Signer>;
 };
 
 /** Autogenerated return type of SignupActivate. */
@@ -9706,30 +10948,58 @@ export type SsoMode =
   /** prompt */
   | 'prompt';
 
+/** Autogenerated return type of StripeSubscriptionMigrate. */
+export type StripeSubscriptionMigratePayload = {
+  __typename?: 'StripeSubscriptionMigratePayload';
+  account?: Maybe<Account>;
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  subscription?: Maybe<Subscription>;
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   account: Account;
   accountId: Scalars['ID']['output'];
+  /** Addon subscriptions for the subscription */
+  addonSubscriptions?: Maybe<Array<Subscription>>;
   cancellationDate?: Maybe<Scalars['ISO8601Date']['output']>;
+  chargeReport?: Maybe<Array<SubscriptionCharge>>;
   charges?: Maybe<Array<SubscriptionCharge>>;
   createdAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
   currencyId: Scalars['ID']['output'];
+  currentCharges?: Maybe<Array<SubscriptionCharge>>;
+  /** Formatted period showing start and end dates */
+  currentPeriod?: Maybe<Scalars['String']['output']>;
+  daysLeftInTrial?: Maybe<Scalars['Int']['output']>;
   endDate?: Maybe<Scalars['ISO8601Date']['output']>;
   evergreen: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   name?: Maybe<Scalars['String']['output']>;
   period: Scalars['String']['output'];
   plan?: Maybe<Plan>;
+  priceAdjustmentAction?: Maybe<PriceAdjustmentAction>;
+  priceAdjustmentActionOptions: Array<Scalars['String']['output']>;
+  priceAdjustmentAllowed?: Maybe<Scalars['Boolean']['output']>;
+  priceAdjustmentLastDate?: Maybe<Scalars['ISO8601Date']['output']>;
+  priceAdjustmentPercentage?: Maybe<Scalars['Float']['output']>;
+  priceAdjustmentTiming?: Maybe<PriceAdjustmentTiming>;
+  priceAdjustmentTimingOptions: Array<Scalars['String']['output']>;
   priceList?: Maybe<PriceList>;
   priceListId: Scalars['ID']['output'];
-  priceOverride: Scalars['Boolean']['output'];
   product?: Maybe<Product>;
-  provisioningRequired: Scalars['Boolean']['output'];
+  /** @deprecated This field is deprecated and will be removed soon */
+  provisioningRequired?: Maybe<Scalars['Boolean']['output']>;
   rampIntervalMonths?: Maybe<Scalars['Int']['output']>;
+  /** Description of the renwal settings */
+  renewalSummary?: Maybe<Scalars['String']['output']>;
+  /** Number of months for the renewal term */
+  renewalTermMonths?: Maybe<Scalars['Int']['output']>;
+  renewalTermMonthsOptions: Array<RenewalTermOption>;
   startDate?: Maybe<Scalars['ISO8601Date']['output']>;
   state: SubscriptionState;
   tenant?: Maybe<Tenant>;
   trialEndDate?: Maybe<Scalars['ISO8601Date']['output']>;
+  trialExpirationAction?: Maybe<TrialExpirationAction>;
   trialPeriod: Scalars['String']['output'];
   trialStartDate?: Maybe<Scalars['ISO8601Date']['output']>;
   updatedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
@@ -9748,14 +11018,20 @@ export type SubscriptionAttributes = {
   endDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
   /** Indicates if the subscription should be renewed automatically */
   evergreen?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Action to take when the price is adjusted */
+  priceAdjustmentAction?: InputMaybe<PriceAdjustmentAction>;
+  /** Percentage of the price adjustment */
+  priceAdjustmentPercentage?: InputMaybe<Scalars['Float']['input']>;
+  /** Timing of the price adjustment */
+  priceAdjustmentTiming?: InputMaybe<PriceAdjustmentTiming>;
   /** Set custom quantity, price and discount rate for charges */
   priceListCharges?: InputMaybe<Array<QuoteChargeAttributes>>;
   /** The code of the plan to subscribe to */
   priceListCode?: InputMaybe<Scalars['String']['input']>;
   /** The id of the plan to subscribe to */
   priceListId?: InputMaybe<Scalars['ID']['input']>;
-  /** Indicates if the subscription should be renewed with prices from the price list */
-  priceOverride?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Number of months for the renewal term */
+  renewalTermMonths?: InputMaybe<Scalars['Int']['input']>;
   /** Date that the subscription starts */
   startDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
   /** Fields to create a tenant for the subscription */
@@ -9766,6 +11042,8 @@ export type SubscriptionAttributes = {
   tenantName?: InputMaybe<Scalars['String']['input']>;
   /** Indicates if the subscription is a trial or immediately active */
   trial?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Action to take when trial expires */
+  trialExpirationAction?: InputMaybe<TrialExpirationAction>;
   /** Overrides the default trial start date */
   trialStartDate?: InputMaybe<Scalars['ISO8601Date']['input']>;
 };
@@ -9781,8 +11059,10 @@ export type SubscriptionCharge = {
   __typename?: 'SubscriptionCharge';
   account: Account;
   amount?: Maybe<Scalars['Float']['output']>;
+  billingCycles: Array<BillingCycle>;
   billingPeriod?: Maybe<BillingPeriod>;
   chargeType?: Maybe<ChargeType>;
+  code?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['ISO8601DateTime']['output'];
   currency: Currency;
   currentPeriodPriceByTiers?: Maybe<Array<SubscriptionTieredPrice>>;
@@ -9791,7 +11071,8 @@ export type SubscriptionCharge = {
   endDate: Scalars['ISO8601Date']['output'];
   expired: Scalars['Boolean']['output'];
   feature?: Maybe<Feature>;
-  id: Scalars['ID']['output'];
+  fullyBilled: Scalars['Boolean']['output'];
+  id?: Maybe<Scalars['ID']['output']>;
   invoiceLineText: Scalars['String']['output'];
   isAmendment: Scalars['Boolean']['output'];
   isRamp: Scalars['Boolean']['output'];
@@ -9814,6 +11095,8 @@ export type SubscriptionCharge = {
   startDate: Scalars['ISO8601Date']['output'];
   subscription: Subscription;
   subscriptionId: Scalars['ID']['output'];
+  subtotal?: Maybe<Scalars['Float']['output']>;
+  taxAmount?: Maybe<Scalars['Float']['output']>;
   /** Average price value when charge is Tiered */
   tieredAveragePrice?: Maybe<Scalars['Float']['output']>;
   trial: Scalars['Boolean']['output'];
@@ -9841,6 +11124,11 @@ export type SubscriptionChargeEdge = {
   node?: Maybe<SubscriptionCharge>;
 };
 
+export type SubscriptionChargeQuantityAttributes = {
+  code: Scalars['String']['input'];
+  quantity: Scalars['Int']['input'];
+};
+
 /** The connection type for Subscription. */
 export type SubscriptionConnection = {
   __typename?: 'SubscriptionConnection';
@@ -9863,7 +11151,7 @@ export type SubscriptionCreatePayload = {
 /** Autogenerated return type of SubscriptionDelete. */
 export type SubscriptionDeletePayload = {
   __typename?: 'SubscriptionDeletePayload';
-  errors?: Maybe<Scalars['String']['output']>;
+  errors?: Maybe<Array<Scalars['String']['output']>>;
   subscription?: Maybe<Subscription>;
 };
 
@@ -9882,6 +11170,13 @@ export type SubscriptionPriceTier = {
   ends?: Maybe<Scalars['Int']['output']>;
   price?: Maybe<Scalars['Float']['output']>;
   starts?: Maybe<Scalars['Int']['output']>;
+};
+
+/** Autogenerated return type of SubscriptionQuantityUpdate. */
+export type SubscriptionQuantityUpdatePayload = {
+  __typename?: 'SubscriptionQuantityUpdatePayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  quote?: Maybe<Quote>;
 };
 
 /** Autogenerated return type of SubscriptionReinstate. */
@@ -9908,7 +11203,9 @@ export type SubscriptionState =
   /** Pending subscription */
   | 'PENDING'
   /** Trial subscription */
-  | 'TRIAL';
+  | 'TRIAL'
+  /** Expired trial subscription */
+  | 'TRIAL_EXPIRED';
 
 export type SubscriptionTenantUpdateAttributes = {
   tenantCode?: InputMaybe<Scalars['String']['input']>;
@@ -9935,6 +11232,7 @@ export type SubscriptionTrialConvertPayload = {
   __typename?: 'SubscriptionTrialConvertPayload';
   errors?: Maybe<Array<Scalars['String']['output']>>;
   invoice?: Maybe<Invoice>;
+  paymentApplications?: Maybe<Array<PaymentApplication>>;
   subscription?: Maybe<Subscription>;
 };
 
@@ -10035,14 +11333,9 @@ export type Tenant = {
   createdAt: Scalars['ISO8601DateTime']['output'];
   id: Scalars['ID']['output'];
   lastLogin?: Maybe<Scalars['ISO8601DateTime']['output']>;
-  latestProvisioningChange?: Maybe<TenantProvisioningChange>;
-  latestProvisioningChangeId?: Maybe<Scalars['ID']['output']>;
   name: Scalars['String']['output'];
   platform: Platform;
   platformId: Scalars['ID']['output'];
-  provisioningChanges?: Maybe<Array<TenantProvisioningChange>>;
-  provisioningRequired?: Maybe<Scalars['Boolean']['output']>;
-  provisioningState?: Maybe<Scalars['String']['output']>;
   subdomain?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['ISO8601DateTime']['output'];
   userCount?: Maybe<Scalars['Int']['output']>;
@@ -10105,65 +11398,27 @@ export type TenantMetricsUpdatePayload = {
   errors?: Maybe<Array<Scalars['String']['output']>>;
 };
 
-export type TenantProvisioningChange = {
-  __typename?: 'TenantProvisioningChange';
-  change?: Maybe<Scalars['JSON']['output']>;
-  createdAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
-  features?: Maybe<Scalars['String']['output']>;
-  featuresJson?: Maybe<Scalars['JSON']['output']>;
-  id: Scalars['ID']['output'];
-  state: TenantProvisioningState;
-  tenant?: Maybe<Tenant>;
-  updatedAt?: Maybe<Scalars['ISO8601DateTime']['output']>;
-};
-
-export type TenantProvisioningChangeAttributes = {
-  state?: InputMaybe<TenantProvisioningState>;
-};
-
-/** The connection type for TenantProvisioningChange. */
-export type TenantProvisioningChangeConnection = {
-  __typename?: 'TenantProvisioningChangeConnection';
-  /** A list of edges. */
-  edges?: Maybe<Array<Maybe<TenantProvisioningChangeEdge>>>;
-  /** A list of nodes. */
-  nodes?: Maybe<Array<Maybe<TenantProvisioningChange>>>;
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
-  totalCount: Scalars['Int']['output'];
-};
-
-/** An edge in a connection. */
-export type TenantProvisioningChangeEdge = {
-  __typename?: 'TenantProvisioningChangeEdge';
-  /** A cursor for use in pagination. */
-  cursor: Scalars['String']['output'];
-  /** The item at the end of the edge. */
-  node?: Maybe<TenantProvisioningChange>;
-};
-
-/** Autogenerated return type of TenantProvisioningChangeUpdate. */
-export type TenantProvisioningChangeUpdatePayload = {
-  __typename?: 'TenantProvisioningChangeUpdatePayload';
-  errors?: Maybe<Array<Scalars['String']['output']>>;
-  tenantProvisioningChange?: Maybe<TenantProvisioningChange>;
-};
-
-export type TenantProvisioningState =
-  /** Tenant provisioning completed */
-  | 'COMPLETED'
-  /** Tenant provisioning failed */
-  | 'FAILED'
-  /** Changes have been made to the subscription that have not been applied yet */
-  | 'PENDING'
-  /** Use this state to trigger a provisioning workflow */
-  | 'STARTED';
-
 /** Autogenerated return type of TenantUpdate. */
 export type TenantUpdatePayload = {
   __typename?: 'TenantUpdatePayload';
   errors?: Maybe<Array<Scalars['String']['output']>>;
   tenant?: Maybe<Tenant>;
+};
+
+/** Autogenerated return type of TestEmail. */
+export type TestEmailPayload = {
+  __typename?: 'TestEmailPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+/** Autogenerated return type of TestWebhook. */
+export type TestWebhookPayload = {
+  __typename?: 'TestWebhookPayload';
+  errors?: Maybe<Array<Scalars['String']['output']>>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type TieredAmount = {
@@ -10184,6 +11439,7 @@ export type Transaction = {
   accountId?: Maybe<Scalars['ID']['output']>;
   amount: Scalars['Float']['output'];
   createdAt: Scalars['ISO8601DateTime']['output'];
+  creditNote?: Maybe<CreditNote>;
   currencyId?: Maybe<Scalars['ID']['output']>;
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
@@ -10284,6 +11540,8 @@ export type User = {
   lastName?: Maybe<Scalars['String']['output']>;
   managerUser?: Maybe<User>;
   managerUserId?: Maybe<Scalars['ID']['output']>;
+  /** Alias for full_name, used by workflow views */
+  name: Scalars['String']['output'];
   profile?: Maybe<UserProfile>;
   role?: Maybe<Role>;
   roleId?: Maybe<Scalars['ID']['output']>;
@@ -10381,8 +11639,6 @@ export type View = {
   id?: Maybe<Scalars['ID']['output']>;
   /** True if this view is to be shown by default on the page */
   isDefault?: Maybe<Scalars['Boolean']['output']>;
-  /** If true, only the user who created the view can see it */
-  isPrivate?: Maybe<Scalars['Boolean']['output']>;
   /** Name of the view */
   name?: Maybe<Scalars['String']['output']>;
   /** Object this view is operating on */
@@ -10463,22 +11719,6 @@ export type Warren = {
   subdomain?: Maybe<Scalars['String']['output']>;
 };
 
-export type WarrenAttributes = {
-  email?: InputMaybe<Scalars['String']['input']>;
-  featureFlags?: InputMaybe<Array<FeatureFlagAttributes>>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  subdomain?: InputMaybe<Scalars['String']['input']>;
-};
-
-/** Autogenerated return type of WarrenProvision. */
-export type WarrenProvisionPayload = {
-  __typename?: 'WarrenProvisionPayload';
-  errors?: Maybe<Array<Scalars['String']['output']>>;
-  warren?: Maybe<Warren>;
-};
-
 export type WebPushAttributes = {
   endpoint: Scalars['String']['input'];
   expirationTime?: InputMaybe<Scalars['Int']['input']>;
@@ -10503,7 +11743,7 @@ export type WebhookEvent = {
   /** Datetime the contact was created */
   createdAt: Scalars['ISO8601DateTime']['output'];
   /** The headers sent with the webhook */
-  headers?: Maybe<Scalars['String']['output']>;
+  headers?: Maybe<Scalars['JSON']['output']>;
   /** Unique identifier for the webhook event */
   id: Scalars['ID']['output'];
   /** Webhook payload that will be sent */
@@ -10546,6 +11786,24 @@ export type WebhookEventRetryPayload = {
   __typename?: 'WebhookEventRetryPayload';
   errors?: Maybe<Array<Scalars['String']['output']>>;
   webhookEvent?: Maybe<WebhookEvent>;
+};
+
+/** Chart data for webhook event logs showing success and failure counts over the last 30 days */
+export type WebhookEventsChart = {
+  __typename?: 'WebhookEventsChart';
+  /** Array of daily data points for the last 30 days */
+  dataPoints: Array<WebhookEventsChartDataPoint>;
+};
+
+/** A data point for webhook event logs chart showing counts for a specific day */
+export type WebhookEventsChartDataPoint = {
+  __typename?: 'WebhookEventsChartDataPoint';
+  /** The date for this data point */
+  date: Scalars['ISO8601Date']['output'];
+  /** Number of failed webhook events (response code not 200) */
+  failCount: Scalars['Int']['output'];
+  /** Number of successful webhook events (response code 200) */
+  successCount: Scalars['Int']['output'];
 };
 
 /** Autogenerated return type of WidgetTokenCreate. */

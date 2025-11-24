@@ -4,7 +4,7 @@ import type { CodegenConfig } from '@graphql-codegen/cli'
 dotenv.config()
 
 const config: CodegenConfig = {
-  schema: [{'https://rich.bunny.com/graphql/': {
+  schema: [{'https://bunny.bunny.internal/graphql/': {
     headers: {
       Authorization: `Bearer ${ process.env.BUNNY_ACCESS_TOKEN }`
     }

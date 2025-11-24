@@ -43,13 +43,6 @@ const query = `query tenant ($code: String!) {
       updatedAt
       website
     }
-    latestProvisioningChange {
-        change
-        createdAt
-        features
-        id
-        updatedAt
-    }
   }
 }`;
 
