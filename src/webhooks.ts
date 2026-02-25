@@ -8,7 +8,7 @@ class Webhooks {
     this.signingToken = signingToken;
   }
 
-  validate(signature: string, payload: unknown, signingToken: string | null = null): boolean {
+  validate(signature: string, payload: string | Buffer, signingToken: string | null = null): boolean {
     const key = signingToken || this.signingToken;
 
     if (!key) {
@@ -17,7 +17,7 @@ class Webhooks {
 
     const payloadSignature = crypto
       .createHmac('sha1', key)
-      .update(JSON.stringify(payload))
+      .update(payload)
       .digest('hex');
 
     const ps = Buffer.from(payloadSignature, 'hex');
