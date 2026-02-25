@@ -377,35 +377,46 @@ When Bunny sends a webhook request it includes a `x-bunny-signature` header whic
 
 Bunny will provide a signing token which you will need to store in your application and use for validating the webhook.
 
+> **Important:** You must pass the **raw request body** to `validate`, not the parsed `req.body`. The HMAC signature is computed against the exact bytes Bunny sent. If you pass a parsed and re-serialised body, characters like `&`, `<`, and `>` may be encoded differently, causing validation to fail.
+
+Use `express.raw()` (or equivalent) to capture the raw body before any JSON parsing:
+
 **TypeScript:**
 
 ```typescript
-interface WebhookRequest {
-  headers: {
-    "x-bunny-signature": string;
-  };
-  body: unknown;
-}
+import express from "express";
 
-const signature: string = req.headers["x-bunny-signature"];
-const payload: unknown = req.body;
-const signingToken: string = "<secret signing token>";
+// Mount raw body middleware on your webhook route
+app.use("/webhook", express.raw({ type: "application/json" }));
 
-const valid: boolean = bunny.webhooks.validate(
-  signature,
-  payload,
-  signingToken
-);
+app.post("/webhook", (req, res) => {
+  const signature: string = req.headers["x-bunny-signature"] as string;
+  const rawBody: Buffer = req.body; // Buffer of exact bytes from the wire
+  const signingToken: string = "<secret signing token>";
+
+  const valid: boolean = bunny.webhooks.validate(
+    signature,
+    rawBody,
+    signingToken
+  );
+});
 ```
 
 **JavaScript:**
 
 ```javascript
-const signature = req.headers["x-bunny-signature"];
-const payload = req.body;
-const signingToken = "<secret signing token>";
+const express = require("express");
 
-const valid = bunny.webhooks.validate(signature, payload, signingToken);
+// Mount raw body middleware on your webhook route
+app.use("/webhook", express.raw({ type: "application/json" }));
+
+app.post("/webhook", (req, res) => {
+  const signature = req.headers["x-bunny-signature"];
+  const rawBody = req.body; // Buffer of exact bytes from the wire
+  const signingToken = "<secret signing token>";
+
+  const valid = bunny.webhooks.validate(signature, rawBody, signingToken);
+});
 ```
 
 ## Test
