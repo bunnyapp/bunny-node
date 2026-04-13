@@ -1,21 +1,20 @@
 # bunny-node
 
-A node sdk for Bunny CRM
+A Node.js SDK for the [Bunny CRM](https://bunny.com) API.
 
-## Setup
-
-Install the latest package.
+## Installation
 
 ```sh
 npm install @bunnyapp/api-client --save
 ```
 
-Create a Bunny api client using either a valid access token or client credentials.
+## Setup
+
+Create a Bunny client using either an access token or client credentials.
 
 ### Access Token
 
-The benefit of providing an accessToken is the request will be faster as an access token does not need to be generated. The
-downside of this approach is that if the token expires then your requests will start to fail.
+Requests are faster since no token exchange is required. However, if the token expires your requests will fail.
 
 **TypeScript:**
 
@@ -31,9 +30,9 @@ const bunny = new Bunny({
 **JavaScript:**
 
 ```javascript
-const BunnyClient = require("@bunnyapp/api-client");
+const Bunny = require("@bunnyapp/api-client");
 
-const bunny = new BunnyClient({
+const bunny = new Bunny({
   baseUrl: "https://<subdomain>.bunny.com",
   accessToken: "<bunny-access-token>",
 });
@@ -41,7 +40,7 @@ const bunny = new BunnyClient({
 
 ### Client Credentials
 
-Alternately you can provide clientId, clientSecret, & scope. In this case the client will generate an access token and if the token expires it will generate another one.
+The client automatically fetches and refreshes access tokens using OAuth2 client credentials.
 
 **TypeScript:**
 
@@ -59,9 +58,9 @@ const bunny = new Bunny({
 **JavaScript:**
 
 ```javascript
-const BunnyClient = require("@bunnyapp/api-client");
+const Bunny = require("@bunnyapp/api-client");
 
-const bunny = new BunnyClient({
+const bunny = new Bunny({
   baseUrl: "https://<subdomain>.bunny.com",
   clientId: "<bunny-client-id>",
   clientSecret: "<bunny-client-secret>",
@@ -69,214 +68,407 @@ const bunny = new BunnyClient({
 });
 ```
 
-## Helper methods
+### Webhook Signing Token (optional)
 
-This SDK provides helper methods for common Bunny API operations. The response types match the GraphQL schema.
-
-**TypeScript:**
+If you plan to validate incoming webhook signatures, you can provide your signing token at construction time so you don't need to pass it on every call:
 
 ```typescript
-import {
-  SubscriptionOptions,
-  Subscription,
-  Mutation,
-  Tenants,
-} from "@bunnyapp/api-client";
+const bunny = new Bunny({
+  baseUrl: "https://<subdomain>.bunny.com",
+  accessToken: "<bunny-access-token>",
+  webhookSigningToken: "<secret-signing-token>",
+});
+```
 
-// Create a new subscription
+---
+
+## Helper methods
+
+The SDK exposes helper methods for common operations. All methods return typed objects matching the Bunny GraphQL schema and throw an `Error` on failure.
+
+### Subscriptions
+
+#### `subscriptionCreate(priceListCode, options)`
+
+Create a new subscription. Either `accountId` (to attach to an existing account) or `accountName` (to create a new account) is required.
+
+```typescript
+import { Subscription } from "@bunnyapp/api-client";
+
+// Using an existing account
 const subscription: Subscription = await bunny.subscriptionCreate(
-  "priceListCode",
+  "price-list-code",
   {
-    // Subscription settings
-    trial: false, // Optional: Start with a trial period
-    evergreen: true, // Optional: Auto-renew subscription
-
-    // Account identification (Must use either accountId OR account details)
-    accountId: "existing-123", // Required unless using accountName: Use existing account
-
-    // Account details (used if accountId is not provided)
-    accountName: "Acme Corp", // Required unless using accountId: Company/Account name
-    ownerUserId: "user-123",
-    phone: "555-0123",
-    fax: "555-0124",
-    website: "www.acme.com",
-
-    // Optional: Billing address
-    billingStreet: "123 Main St",
-    billingCity: "San Francisco",
-    billingZip: "94105",
-    billingState: "CA",
-    billingCountry: "US",
-
-    // Billing contact information
-    firstName: "John", // Required
+    accountId: "account-123",
+    firstName: "Jane",
     lastName: "Doe",
-    email: "john@acme.com", // Required
-    mobile: "555-0125",
-    salutation: "Mr",
-    title: "CEO",
-
-    // Optional: Billing contact mailing address
-    mailingStreet: "456 Market St",
-    mailingCity: "San Francisco",
-    mailingZip: "94105",
-    mailingState: "CA",
-    mailingCountry: "US",
-
-    // Optional: Tenant information
-    tenantCode: "tenant-123",
-    tenantName: "Acme Team",
+    email: "jane@acme.com",
   }
 );
 
-// Get a session token for the Bunny customer portal
-const portalSession = await bunny.portalSessionCreate("tenantCode");
+// Creating a new account
+const subscription = await bunny.subscriptionCreate("price-list-code", {
+  // Subscription settings
+  trial: false,      // Optional: start with a trial period (default: false)
+  evergreen: true,   // Optional: auto-renew the subscription (default: true)
 
-// Optionally supply a return url to get back to your app
-const portalSessionWithUrl = await bunny.portalSessionCreate(
-  "tenantCode",
-  "https://example.com"
+  // New account details
+  accountName: "Acme Corp",
+  ownerUserId: "user-123",
+  phone: "555-0123",
+  fax: "555-0124",
+  website: "www.acme.com",
+
+  // Billing address
+  billingStreet: "123 Main St",
+  billingCity: "San Francisco",
+  billingState: "CA",
+  billingZip: "94105",
+  billingCountry: "US",
+
+  // Billing contact
+  firstName: "John",
+  lastName: "Doe",
+  email: "john@acme.com",
+  mobile: "555-0125",
+  salutation: "Mr",
+  title: "CEO",
+
+  // Billing contact mailing address
+  mailingStreet: "456 Market St",
+  mailingCity: "San Francisco",
+  mailingState: "CA",
+  mailingZip: "94105",
+  mailingCountry: "US",
+
+  // Tenant to create alongside the subscription
+  tenantCode: "acme-team",
+  tenantName: "Acme Team",
+});
+
+console.log(subscription.id);        // subscription ID
+console.log(subscription.state);     // e.g. "active"
+console.log(subscription.tenant.id); // tenant ID
+```
+
+#### `subscriptionCancel(subscriptionId)`
+
+Cancel an existing subscription.
+
+```typescript
+const cancelled = await bunny.subscriptionCancel("subscription-123");
+// Returns true on success, throws on failure
+```
+
+---
+
+### Tenants
+
+#### `tenantByCode(code)`
+
+Fetch a tenant and its associated account by tenant code.
+
+```typescript
+import { Tenant } from "@bunnyapp/api-client";
+
+const tenant = await bunny.tenantByCode("acme-team");
+
+console.log(tenant.id);                  // tenant ID
+console.log(tenant.name);               // tenant name
+console.log(tenant.subdomain);          // tenant subdomain
+console.log(tenant.account.id);         // account ID
+console.log(tenant.account.billingCity); // billing city
+```
+
+#### `tenantCreate(name, code, platformCode, accountId, subscriptionId)`
+
+Create a new tenant and associate it with a subscription.
+
+```typescript
+const tenant = await bunny.tenantCreate(
+  "Acme Team",       // name
+  "acme-team",       // unique code
+  "platform-code",   // platform code
+  "account-123",     // account ID
+  "subscription-123" // subscription ID
 );
 
-// Default session length is 24 hours but you can change it. e.g 12 hours
-const portalSessionWithDuration = await bunny.portalSessionCreate(
-  "tenantCode",
-  "https://example.com",
-  12
+console.log(tenant.id);           // tenant ID
+console.log(tenant.platform.code); // platform code
+```
+
+#### `tenantUpdate(id, code?, name?)`
+
+Update a tenant's code and/or name.
+
+```typescript
+const tenant = await bunny.tenantUpdate(
+  "tenant-123",  // tenant ID
+  "new-code",    // optional: new code
+  "New Name"     // optional: new name
 );
 
-// Track usage for billing
-const usageTracking = await bunny.featureUsageCreate(
-  "featureCode",
-  1,
-  "subscriptionId",
-  new Date()
-);
+console.log(tenant?.id);   // tenant ID
+console.log(tenant?.name); // updated name
+```
 
-// Update account details including billing address for account
-const updatedAccount = await bunny.accountUpdateByTenantCode("tenantCode", {
+#### `tenantMetricsUpdate(code, lastLogin?, userCount?, utilizationMetrics?)`
+
+Push usage metrics for a tenant. Useful for tracking engagement data in Bunny.
+
+```typescript
+await bunny.tenantMetricsUpdate(
+  "acme-team",           // tenant code
+  new Date(),            // lastLogin: Date or ISO string (optional)
+  42,                    // userCount (optional)
+  { activeProjects: 10 } // utilizationMetrics: any key/value object (optional)
+);
+// Returns true on success, throws on failure
+```
+
+---
+
+### Accounts
+
+#### `accountUpdateByTenantCode(tenantCode, attributes)`
+
+Update an account's details by looking it up via its tenant code. Accepts any `AccountAttributes` fields.
+
+```typescript
+import { AccountAttributes } from "@bunnyapp/api-client";
+
+const account = await bunny.accountUpdateByTenantCode("acme-team", {
+  // Billing address
   billingStreet: "123 Main Street",
   billingCity: "Pleasantville",
   billingState: "CA",
   billingZip: "90210",
   billingCountry: "US",
+
+  // Other updatable fields
+  name: "Acme Corp",
+  phone: "555-0123",
+  fax: "555-0124",
+  website: "www.acme.com",
+  description: "A leading provider of widgets",
+  employees: 250,
+  annualRevenue: 5000000,
+  netPaymentDays: 30,
+  currencyId: "currency-id",
+  taxNumber: "TAX-12345",
+  duns: "123456789",
+  entityUseCode: "use-code",
+});
+
+console.log(account?.id);          // account ID
+console.log(account?.billingCity); // updated city
+```
+
+---
+
+### Portal Sessions
+
+#### `portalSessionCreate(tenantCode, returnUrl?, expiryInHours?)`
+
+Generate a session token to embed the Bunny customer portal within your application.
+
+```typescript
+// Basic — 24-hour token, no return URL
+const token = await bunny.portalSessionCreate("acme-team");
+
+// With a return URL
+const token = await bunny.portalSessionCreate(
+  "acme-team",
+  "https://app.example.com/billing"
+);
+
+// Custom expiry (e.g. 4 hours)
+const token = await bunny.portalSessionCreate(
+  "acme-team",
+  "https://app.example.com/billing",
+  4
+);
+
+// Redirect the user to the portal
+res.redirect(`https://<subdomain>.bunny.com/portal?token=${token}`);
+```
+
+---
+
+### Feature Usage
+
+#### `featureUsageCreate(featureCode, quantity, subscriptionId, usageAt?)`
+
+Record metered feature usage against a subscription for billing.
+
+```typescript
+// Record usage now
+const usage = await bunny.featureUsageCreate(
+  "api-calls",        // featureCode
+  100,                // quantity
+  "subscription-123"  // subscriptionId
+);
+
+// Record usage at a specific point in time (ISO 8601 string)
+const usage = await bunny.featureUsageCreate(
+  "api-calls",
+  100,
+  "subscription-123",
+  "2024-03-15T10:00:00Z"
+);
+
+console.log(usage.id);              // usage record ID
+console.log(usage.quantity);        // 100
+console.log(usage.feature.code);    // "api-calls"
+console.log(usage.subscription.id); // "subscription-123"
+```
+
+---
+
+### Webhooks
+
+#### `bunny.webhooks.validate(signature, rawBody, signingToken?)`
+
+Verify the authenticity of an incoming Bunny webhook. Bunny signs every request with a `x-bunny-signature` header.
+
+> **Important:** Pass the **raw request body** (a `Buffer`), not the parsed JSON. Re-serialising the body can alter characters like `&`, `<`, and `>` causing validation to fail.
+
+**Express example:**
+
+```typescript
+import express from "express";
+
+// Capture the raw body before any JSON parsing
+app.use("/webhook", express.raw({ type: "application/json" }));
+
+app.post("/webhook", (req, res) => {
+  const signature = req.headers["x-bunny-signature"] as string;
+  const rawBody = req.body; // Buffer
+
+  // Using the signing token passed at construction time
+  const valid = bunny.webhooks.validate(signature, rawBody);
+
+  // Or pass the signing token explicitly
+  const valid = bunny.webhooks.validate(signature, rawBody, "<signing-token>");
+
+  if (!valid) {
+    return res.status(401).send("Invalid signature");
+  }
+
+  const event = JSON.parse(rawBody.toString());
+  // process event...
+  res.status(200).send("OK");
 });
 ```
 
 **JavaScript:**
 
 ```javascript
-// Create a new subscription
-const subscription = await bunny.subscriptionCreate("priceListCode", {
-  // Subscription settings
-  trial: false, // Optional: Start with a trial period
-  evergreen: true, // Optional: Auto-renew subscription
+const express = require("express");
 
-  // Account identification (Must use either accountId OR account details)
-  accountId: "existing-123", // Required unless using accountName: Use existing account
+app.use("/webhook", express.raw({ type: "application/json" }));
 
-  // Account details (used if accountId is not provided)
-  accountName: "Acme Corp", // Required unless using accountId: Company/Account name
-  ownerUserId: "user-123",
-  phone: "555-0123",
-  fax: "555-0124",
-  website: "www.acme.com",
+app.post("/webhook", (req, res) => {
+  const signature = req.headers["x-bunny-signature"];
+  const rawBody = req.body;
 
-  // Optional: Billing address
-  billingStreet: "123 Main St",
-  billingCity: "San Francisco",
-  billingZip: "94105",
-  billingState: "CA",
-  billingCountry: "US",
+  const valid = bunny.webhooks.validate(signature, rawBody, "<signing-token>");
 
-  // Billing contact information
-  firstName: "John", // Required
-  lastName: "Doe",
-  email: "john@acme.com", // Required
-  mobile: "555-0125",
-  salutation: "Mr",
-  title: "CEO",
+  if (!valid) {
+    return res.status(401).send("Invalid signature");
+  }
 
-  // Optional: Billing contact mailing address
-  mailingStreet: "456 Market St",
-  mailingCity: "San Francisco",
-  mailingZip: "94105",
-  mailingState: "CA",
-  mailingCountry: "US",
-
-  // Optional: Tenant information
-  tenantCode: "tenant-123",
-  tenantName: "Acme Team",
-});
-
-// Get a session token for the Bunny customer portal
-const portalSession = await bunny.portalSessionCreate("tenantCode");
-
-// Optionally supply a return url to get back to your app
-const portalSessionWithUrl = await bunny.portalSessionCreate(
-  "tenantCode",
-  "https://example.com"
-);
-
-// Default session length is 24 hours but you can change it. e.g 12 hours
-const portalSessionWithDuration = await bunny.portalSessionCreate(
-  "tenantCode",
-  "https://example.com",
-  12
-);
-
-// Track usage for billing
-const usageTracking = await bunny.featureUsageCreate(
-  "featureCode",
-  1,
-  "subscriptionId",
-  new Date()
-);
-
-// Update account details including billing address for account
-const updatedAccount = await bunny.accountUpdateByTenantCode("tenantCode", {
-  billingStreet: "123 Main Street",
-  billingCity: "Pleasantville",
-  billingState: "CA",
-  billingZip: "90210",
-  billingCountry: "US",
+  const event = JSON.parse(rawBody.toString());
+  res.status(200).send("OK");
 });
 ```
 
+---
+
+### Direct GraphQL queries
+
+If a helper doesn't cover your use case, execute any GraphQL query directly. Full TypeScript support is available for all generated schema types.
+
+```typescript
+import { Tenant } from "@bunnyapp/api-client";
+
+const query = `
+  query tenants($filter: String, $limit: Int) {
+    tenants(filter: $filter, limit: $limit) {
+      id
+      name
+      code
+      platform {
+        id
+        name
+        code
+      }
+    }
+  }
+`;
+
+const response = await bunny.query<{ tenants: Tenant[] }>(query, {
+  filter: "",
+  limit: 10,
+});
+
+const tenants = response.data?.tenants;
+```
+
+**JavaScript:**
+
+```javascript
+const query = `
+  query tenants($filter: String, $limit: Int) {
+    tenants(filter: $filter, limit: $limit) {
+      id
+      name
+      code
+      platform {
+        id
+        name
+        code
+      }
+    }
+  }
+`;
+
+const response = await bunny.query(query, { filter: "", limit: 10 });
+const tenants = response.data?.tenants;
+```
+
+---
+
 ## Error handling
 
-If there is an error with a helper method an exception will be raised.
+All helper methods throw an `Error` if the request fails or if the API returns errors. Wrap calls in `try/catch` or chain `.catch()`.
 
 **TypeScript:**
 
 ```typescript
 import { Subscription } from "@bunnyapp/api-client";
 
+// async/await
 try {
   const subscription: Subscription = await bunny.subscriptionCreate(
-    "priceListCode",
-    {
-      trial: true,
-      evergreen: true,
-      accountName: "Test Account",
-    }
+    "price-list-code",
+    { accountName: "Acme Corp", firstName: "John", email: "john@acme.com" }
   );
-  // Handle successful subscription
 } catch (error) {
   if (error instanceof Error) {
     console.error(error.message);
   }
 }
 
-// Or using promises
+// Promise chain
 bunny
-  .subscriptionCreate("priceListCode", {
-    trial: true,
-    evergreen: true,
-    accountName: "Test Account",
+  .subscriptionCreate("price-list-code", {
+    accountName: "Acme Corp",
+    firstName: "John",
+    email: "john@acme.com",
   })
   .then((subscription: Subscription) => {
-    // Handle successful subscription
+    // handle success
   })
   .catch((error: Error) => {
     console.error(error.message);
@@ -287,141 +479,19 @@ bunny
 
 ```javascript
 try {
-  const subscription = await bunny.subscriptionCreate("priceListCode", {
-    trial: true,
-    evergreen: true,
-    accountName: "Test Account",
+  const subscription = await bunny.subscriptionCreate("price-list-code", {
+    accountName: "Acme Corp",
+    firstName: "John",
+    email: "john@acme.com",
   });
-  // Handle successful subscription
 } catch (error) {
   console.error(error.message);
 }
-
-// Or using promises
-bunny
-  .subscriptionCreate("priceListCode", {
-    trial: true,
-    evergreen: true,
-    accountName: "Test Account",
-  })
-  .then((subscription) => {
-    // Handle successful subscription
-  })
-  .catch((error) => {
-    console.error(error.message);
-  });
 ```
 
-## Direct GraphQL queries
+---
 
-If the helper methods don't cover your needs, you can make direct GraphQL queries. The SDK provides full TypeScript support for the GraphQL schema.
-
-**TypeScript:**
-
-```typescript
-import { Tenants } from "@bunnyapp/api-client";
-
-// Example using generated GraphQL types
-const query = `query tenants ($filter: String, $limit: Int) {
-    tenants (filter: $filter, limit: $limit) {
-        platform {
-            id
-            name
-            code
-        }
-        id
-        name
-        code
-    }
-}`;
-
-const variables = {
-  filter: "",
-  limit: 10,
-};
-
-// Use the generated Tenants type instead of custom TenantsResponse interface
-const response = await bunny.query<{ data: { tenants: Tenants[] } }>(
-  query,
-  variables
-);
-```
-
-**JavaScript:**
-
-```javascript
-const query = `query tenants ($filter: String, $limit: Int) {
-    tenants (filter: $filter, limit: $limit) {
-        platform {
-            id
-            name
-            code
-        }
-        id
-        name
-        code
-    }
-}`;
-
-const variables = {
-  filter: "",
-  limit: 10,
-};
-
-const response = await bunny.query(query, variables);
-```
-
-## Validate a webhook payload
-
-When Bunny sends a webhook request it includes a `x-bunny-signature` header which can be used to validate the authenticity of the payload body.
-
-Bunny will provide a signing token which you will need to store in your application and use for validating the webhook.
-
-> **Important:** You must pass the **raw request body** to `validate`, not the parsed `req.body`. The HMAC signature is computed against the exact bytes Bunny sent. If you pass a parsed and re-serialised body, characters like `&`, `<`, and `>` may be encoded differently, causing validation to fail.
-
-Use `express.raw()` (or equivalent) to capture the raw body before any JSON parsing:
-
-**TypeScript:**
-
-```typescript
-import express from "express";
-
-// Mount raw body middleware on your webhook route
-app.use("/webhook", express.raw({ type: "application/json" }));
-
-app.post("/webhook", (req, res) => {
-  const signature: string = req.headers["x-bunny-signature"] as string;
-  const rawBody: Buffer = req.body; // Buffer of exact bytes from the wire
-  const signingToken: string = "<secret signing token>";
-
-  const valid: boolean = bunny.webhooks.validate(
-    signature,
-    rawBody,
-    signingToken
-  );
-});
-```
-
-**JavaScript:**
-
-```javascript
-const express = require("express");
-
-// Mount raw body middleware on your webhook route
-app.use("/webhook", express.raw({ type: "application/json" }));
-
-app.post("/webhook", (req, res) => {
-  const signature = req.headers["x-bunny-signature"];
-  const rawBody = req.body; // Buffer of exact bytes from the wire
-  const signingToken = "<secret signing token>";
-
-  const valid = bunny.webhooks.validate(signature, rawBody, signingToken);
-});
-```
-
-## Test
-
-Run unit tests
+## Tests
 
 ```sh
 npm test
